@@ -1,0 +1,17 @@
+com\mycompany\how2fly\MainFrame$1.class
+com\mycompany\how2fly\pojo\Layover.class
+com\mycompany\how2fly\pojo\SearchParameters.class
+com\mycompany\how2fly\pojo\Response.class
+com\mycompany\how2fly\pojo\Airport.class
+com\mycompany\how2fly\pojo\Flight.class
+com\mycompany\how2fly\FlightDetailsPanel.class
+com\mycompany\how2fly\WishListPanel.class
+com\mycompany\how2fly\MainFrame.class
+com\mycompany\how2fly\pojo\BestFlights.class
+com\mycompany\how2fly\pojo\OtherFlights.class
+com\mycompany\how2fly\pojo\SearchMetadata.class
+com\mycompany\how2fly\pojo\CarbonEmission.class
+com\mycompany\how2fly\Main.class
+com\mycompany\how2fly\MainFrame$2.class
+com\mycompany\how2fly\pojo\frontend\FlightDetails.class
+com\mycompany\how2fly\FlightListElementPanel.class
