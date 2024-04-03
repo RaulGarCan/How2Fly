@@ -25,25 +25,30 @@ import javax.swing.ScrollPaneConstants;
  * @author Alumno
  */
 public class WishListPanel extends javax.swing.JPanel {
+
     private MainFrame parent;
+
     /**
      * Creates new form WishListPanel
      */
     public WishListPanel(MainFrame parent) {
+        this.parent = parent;
         initComponents();
         start();
-        this.parent = parent;
     }
-    private void start(){
+
+    private void start() {
         this.setBackground(Color.green);
         GridBagLayout homeLayout = new GridBagLayout();
         GridBagConstraints constraints = new GridBagConstraints();
         this.setLayout(homeLayout);
+        constraints.anchor = GridBagConstraints.WEST;
         constraints.gridx = 0;
         constraints.gridy = 0;
         constraints.gridheight = 1;
         constraints.gridwidth = 1;
         this.add(btnBackHome(), constraints);
+        constraints = new GridBagConstraints();
         constraints.gridx = 0;
         constraints.gridy = 1;
         constraints.gridheight = 3;
@@ -53,7 +58,8 @@ public class WishListPanel extends javax.swing.JPanel {
         constraints.fill = GridBagConstraints.BOTH;
         this.add(setupBottomPanel(), constraints);
     }
-    private JButton btnBackHome(){
+
+    private JButton btnBackHome() {
         JButton btnHome = new JButton("Home");
         btnHome.addMouseListener(new MouseListener() {
             @Override
@@ -82,6 +88,7 @@ public class WishListPanel extends javax.swing.JPanel {
         });
         return btnHome;
     }
+
     private JPanel setupBottomPanel() {
         JPanel bottomPanel = new JPanel();
         bottomPanel.setBackground(Color.red);
@@ -121,7 +128,7 @@ public class WishListPanel extends javax.swing.JPanel {
         constraints.gridheight = 1;
         constraints.weightx = 0.5;
         constraints.weighty = 1;
-        constraints.insets = new Insets(10,10,10,10);
+        constraints.insets = new Insets(10, 10, 10, 10);
         constraints.fill = GridBagConstraints.BOTH;
         bottomPanel.add(filtersPanel, constraints);
 
@@ -138,14 +145,12 @@ public class WishListPanel extends javax.swing.JPanel {
         // Based on API response when searched returns a list of
         // panels matching the number of flights returned
         ArrayList<JPanel> tmp = new ArrayList<>();
-        tmp.add(new FlightListElementPanel());
-        tmp.add(new FlightListElementPanel());
-        tmp.add(new FlightListElementPanel());
-        tmp.add(new FlightListElementPanel());
-        tmp.add(new FlightListElementPanel());
-        tmp.add(new FlightListElementPanel());
-        tmp.add(new FlightListElementPanel());
-        tmp.add(new FlightListElementPanel());
+        tmp.add(new FlightListElementPanel(parent, this));
+        tmp.add(new FlightListElementPanel(parent, this));
+        tmp.add(new FlightListElementPanel(parent, this));
+        tmp.add(new FlightListElementPanel(parent, this));
+        tmp.add(new FlightListElementPanel(parent, this));
+        tmp.add(new FlightListElementPanel(parent, this));
         return tmp;
     }
 

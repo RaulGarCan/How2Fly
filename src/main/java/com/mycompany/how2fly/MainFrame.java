@@ -79,7 +79,7 @@ public class MainFrame extends javax.swing.JFrame {
         constraints.fill = GridBagConstraints.BOTH;
         homePanel.add(setupBottomPanel(), constraints);
     }
-
+    
     private JPanel setupTopPanel() {
         Dimension dim = new Dimension(this.getSize().width / 8, 25);
         JPanel topPanel = new JPanel();
@@ -249,14 +249,12 @@ public class MainFrame extends javax.swing.JFrame {
         // Based on API response when searched returns a list of
         // panels matching the number of flights returned
         ArrayList<JPanel> tmp = new ArrayList<>();
-        tmp.add(new FlightListElementPanel());
-        tmp.add(new FlightListElementPanel());
-        tmp.add(new FlightListElementPanel());
-        tmp.add(new FlightListElementPanel());
-        tmp.add(new FlightListElementPanel());
-        tmp.add(new FlightListElementPanel());
-        tmp.add(new FlightListElementPanel());
-        tmp.add(new FlightListElementPanel());
+        tmp.add(new FlightListElementPanel(this, homePanel));
+        tmp.add(new FlightListElementPanel(this, homePanel));
+        tmp.add(new FlightListElementPanel(this, homePanel));
+        tmp.add(new FlightListElementPanel(this, homePanel));
+        tmp.add(new FlightListElementPanel(this, homePanel));
+        tmp.add(new FlightListElementPanel(this, homePanel));
         return tmp;
     }
 
@@ -268,8 +266,7 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void loadWishListPanel() {
         this.remove(homePanel);
-        wishListPanel = new WishListPanel(this);
-        this.add(wishListPanel);
+        this.add(new WishListPanel(this));
         revalidate();
         repaint();
     }

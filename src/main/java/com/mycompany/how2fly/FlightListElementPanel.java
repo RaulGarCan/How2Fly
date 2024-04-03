@@ -8,10 +8,10 @@ import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.util.ArrayList;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 
 /**
@@ -20,10 +20,15 @@ import javax.swing.JPanel;
  */
 public class FlightListElementPanel extends javax.swing.JPanel {
 
+    private MainFrame parent;
+    private JPanel context;
+
     /**
      * Creates new form FlightListElementPanel
      */
-    public FlightListElementPanel() {
+    public FlightListElementPanel(MainFrame parent, JPanel context) {
+        this.parent = parent;
+        this.context = context;
         initComponents();
         start();
     }
@@ -38,6 +43,8 @@ public class FlightListElementPanel extends javax.swing.JPanel {
         JPanel infoPanel = new JPanel();
         infoPanel.setBackground(Color.MAGENTA);
 
+        sendToDetailsListener(infoPanel);
+
         constraints.gridx = 0;
         constraints.gridy = 0;
         constraints.gridwidth = 1;
@@ -51,10 +58,38 @@ public class FlightListElementPanel extends javax.swing.JPanel {
         constraints.gridheight = 2;
         constraints.weightx = 1;
         constraints.weighty = 1;
-        constraints.insets = new Insets(0,0,10,10);
+        constraints.insets = new Insets(0, 0, 10, 10);
         constraints.fill = GridBagConstraints.BOTH;
-        
+
         this.add(infoPanel, constraints);
+    }
+
+    private void sendToDetailsListener(JPanel panel) {
+        panel.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                parent.remove(context);
+                parent.add(new FlightDetailsPanel(parent, context));
+                parent.revalidate();
+                parent.repaint();
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+            }
+        });
     }
 
     /**

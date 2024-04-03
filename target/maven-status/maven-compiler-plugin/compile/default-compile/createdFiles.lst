@@ -7,7 +7,9 @@ com\mycompany\how2fly\WishListPanel$1.class
 com\mycompany\how2fly\pojo\Flight.class
 com\mycompany\how2fly\FlightDetailsPanel.class
 com\mycompany\how2fly\WishListPanel.class
+com\mycompany\how2fly\FlightListElementPanel$1.class
 com\mycompany\how2fly\MainFrame.class
+com\mycompany\how2fly\FlightDetailsPanel$1.class
 com\mycompany\how2fly\pojo\BestFlights.class
 com\mycompany\how2fly\pojo\OtherFlights.class
 com\mycompany\how2fly\pojo\SearchMetadata.class

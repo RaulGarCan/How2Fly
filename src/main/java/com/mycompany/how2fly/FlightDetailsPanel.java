@@ -5,21 +5,110 @@
 package com.mycompany.how2fly;
 
 import com.mycompany.how2fly.pojo.frontend.FlightDetails;
+import java.awt.Color;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 /**
  *
  * @author Alumno
  */
 public class FlightDetailsPanel extends javax.swing.JPanel {
+
     private FlightDetails flightDetails;
+    private MainFrame parent;
+    private JPanel context;
+
     /**
      * Creates new form FlightDetailsPanel
      */
-    public FlightDetailsPanel() {
+    public FlightDetailsPanel(MainFrame parent, JPanel context) {
+        this.parent = parent;
+        this.context = context;
         initComponents();
+        start();
     }
-    private void start(){
-        
+
+    private void start() {
+        JLabel lbHeader = new JLabel("From - To");
+        lbHeader.setOpaque(true);
+        lbHeader.setBackground(Color.green);
+        JPanel detailsPanel = new JPanel();
+        detailsPanel.setBackground(Color.red);
+        JButton btnBack = new JButton("Back");
+
+        btnBack.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                goBack();
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+            }
+        });
+
+        JButton btnBook = new JButton("Book Now!");
+
+        GridBagLayout detailsLayout = new GridBagLayout();
+        GridBagConstraints c = new GridBagConstraints();
+        this.setLayout(detailsLayout);
+
+        c.anchor = GridBagConstraints.CENTER;
+        c.gridy = 0;
+        c.gridheight = 1;
+        c.gridwidth = 1;
+        this.add(lbHeader, c);
+
+        c.gridx = 0;
+        c.gridy = 1;
+        c.gridheight = 4;
+        c.weightx = 1;
+        c.weighty = 1;
+        c.fill = GridBagConstraints.BOTH;
+        this.add(detailsPanel, c);
+
+        c.anchor = GridBagConstraints.WEST;
+        c.gridheight = 1;
+        c.gridwidth = 1;
+        c.gridy = 5;
+        c.weightx = 0;
+        c.weighty = 0;
+        c.fill = GridBagConstraints.NONE;
+        this.add(btnBack, c);
+
+        c.anchor = GridBagConstraints.EAST;
+        this.add(btnBook, c);
+
+        loadFlightData();
+    }
+
+    private void loadFlightData() {
+
+    }
+
+    private void goBack() {
+        parent.remove(this);
+        parent.add(context);
+        parent.revalidate();
+        parent.repaint();
     }
 
     /**
