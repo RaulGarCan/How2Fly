@@ -19,7 +19,6 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
@@ -47,13 +46,22 @@ public class MainFrame extends javax.swing.JFrame {
     private void start() {
         this.setBounds(0, 0, 500, 500);
 
+        createHomePanel();
+
+        GridLayout frameLayout = new GridLayout(0, 1);
+        this.setLayout(frameLayout);
+        this.add(homePanel);
+
+        this.setExtendedState(MAXIMIZED_BOTH);
+    }
+
+    private void createHomePanel() {
         homePanel = new JPanel();
         homePanel.setBackground(Color.GREEN);
 
         GridBagLayout homeLayout = new GridBagLayout();
         GridBagConstraints constraints = new GridBagConstraints();
         homePanel.setLayout(homeLayout);
-        constraints.anchor = GridBagConstraints.FIRST_LINE_START;
         constraints.gridx = 0;
         constraints.gridy = 0;
         constraints.gridwidth = 1;
@@ -70,27 +78,6 @@ public class MainFrame extends javax.swing.JFrame {
         constraints.weightx = 1;
         constraints.fill = GridBagConstraints.BOTH;
         homePanel.add(setupBottomPanel(), constraints);
-
-        GridLayout frameLayout = new GridLayout(1, 1);
-        this.setLayout(frameLayout);
-        this.add(homePanel);
-
-        this.setExtendedState(MAXIMIZED_BOTH);
-    }
-
-    private void matchParentSize(JPanel panel, JFrame parent) {
-        panel.setSize(parent.getSize());
-        panel.setPreferredSize(parent.getPreferredSize());
-    }
-
-    private void matchParentSize(JPanel panel, JPanel parent) {
-        panel.setSize(parent.getSize());
-        panel.setPreferredSize(parent.getPreferredSize());
-    }
-
-    private void matchParentSize(JPanel panel, JScrollPane parent) {
-        panel.setSize(parent.getSize());
-        panel.setPreferredSize(parent.getPreferredSize());
     }
 
     private JPanel setupTopPanel() {
@@ -121,6 +108,35 @@ public class MainFrame extends javax.swing.JFrame {
         topPanel.add(lbType);
 
         topPanel.add(new JLabel());
+        
+        JPanel panelBtnWishLsit = new JPanel();
+        panelBtnWishLsit.setBackground(topPanel.getBackground());
+        JButton btnWishList = new JButton("WishListPanel");
+        btnWishList.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                loadWishListPanel();
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+            }
+        });
+        btnWishList.setToolTipText("WishList");
+        panelBtnWishLsit.add(btnWishList);
+        topPanel.add(panelBtnWishLsit);
 
         // Bottom Row
         JTextField tfFrom = new JTextField();
@@ -151,31 +167,28 @@ public class MainFrame extends javax.swing.JFrame {
         btnSearch.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
             }
 
             @Override
             public void mousePressed(MouseEvent e) {
-                throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
             }
 
             @Override
             public void mouseReleased(MouseEvent e) {
-                throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
             }
 
             @Override
             public void mouseEntered(MouseEvent e) {
-                throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
             }
 
             @Override
             public void mouseExited(MouseEvent e) {
-                throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
             }
         });
-        tfFrom.setToolTipText("Search");
+        btnSearch.setToolTipText("Search");
         topPanel.add(btnSearch);
+
+        topPanel.add(new JLabel());
 
         return topPanel;
     }
@@ -219,7 +232,7 @@ public class MainFrame extends javax.swing.JFrame {
         constraints.gridheight = 1;
         constraints.weightx = 0.5;
         constraints.weighty = 1;
-        constraints.insets = new Insets(10,10,10,10);
+        constraints.insets = new Insets(10, 10, 10, 10);
         constraints.fill = GridBagConstraints.BOTH;
         bottomPanel.add(filtersPanel, constraints);
 
@@ -251,6 +264,18 @@ public class MainFrame extends javax.swing.JFrame {
         for (String f : filters) {
             filtersPanel.add(new JCheckBox(f));
         }
+    }
+
+    private void loadWishListPanel() {
+        this.remove(homePanel);
+        wishListPanel = new WishListPanel(this);
+        this.add(wishListPanel);
+        revalidate();
+        repaint();
+    }
+
+    public JPanel getHomePanel() {
+        return homePanel;
     }
 
     /**

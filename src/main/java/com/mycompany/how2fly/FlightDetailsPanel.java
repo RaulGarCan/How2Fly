@@ -4,17 +4,22 @@
  */
 package com.mycompany.how2fly;
 
+import com.mycompany.how2fly.pojo.frontend.FlightDetails;
+
 /**
  *
  * @author Alumno
  */
 public class FlightDetailsPanel extends javax.swing.JPanel {
-
+    private FlightDetails flightDetails;
     /**
      * Creates new form FlightDetailsPanel
      */
     public FlightDetailsPanel() {
         initComponents();
+    }
+    private void start(){
+        
     }
 
     /**
