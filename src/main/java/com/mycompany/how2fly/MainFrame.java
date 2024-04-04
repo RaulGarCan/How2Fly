@@ -4,6 +4,11 @@
  */
 package com.mycompany.how2fly;
 
+import com.google.gson.Gson;
+import com.mycompany.how2fly.pojo.BestFlights;
+import com.mycompany.how2fly.pojo.OtherFlights;
+import com.mycompany.how2fly.pojo.Response;
+import com.mycompany.how2fly.pojo.frontend.FlightDetails;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
@@ -13,11 +18,20 @@ import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JFrame;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -30,8 +44,9 @@ import javax.swing.ScrollPaneConstants;
  */
 public class MainFrame extends javax.swing.JFrame {
 
+    private String rutaExample = "./src/main/java/com/mycompany/how2fly/data/example.json";
+    private String rutaCache = "./src/main/java/com/mycompany/how2fly/cache/cache.json";
     private JPanel homePanel;
-    private WishListPanel wishListPanel;
     private FlightDetailsPanel flightDetailsPanel;
     private final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 
@@ -53,6 +68,42 @@ public class MainFrame extends javax.swing.JFrame {
         this.add(homePanel);
 
         this.setExtendedState(MAXIMIZED_BOTH);
+    }
+    private void checkFields(){
+        
+    }
+    
+    private boolean fieldsFilled(ArrayList<JTextField> tfs){
+        for(JTextField tf : tfs){
+            if(tf.getText().isBlank()){
+                return false;
+            }
+        }
+        return true;
+    }
+    private boolean fieldsFromToDiff(JTextField tfFrom, JTextField tfTo){
+        return !tfFrom.getText().equals(tfTo.getText());
+    }
+    private LocalDate parseDate(String date){
+        String[] data = date.split("-");
+        if(data.length==0){
+            data = date.split("/");
+        }
+        if(data.length==0){
+            return LocalDate.now();
+        }
+        return LocalDate.of(Integer.parseInt(data[0]),Integer.parseInt(data[1]),Integer.parseInt(data[2]));
+    }
+
+    private ArrayList<FlightDetails> getFrontEndDetails(ArrayList<BestFlights> bestFlights, ArrayList<OtherFlights> otherFlights) {
+        ArrayList<FlightDetails> flightDetails = new ArrayList<>();
+        for (BestFlights flights : bestFlights) {
+            flightDetails.add(new FlightDetails(flights));
+        }
+        for (OtherFlights flights : otherFlights) {
+            flightDetails.add(new FlightDetails(flights));
+        }
+        return flightDetails;
     }
 
     private void createHomePanel() {
@@ -79,7 +130,7 @@ public class MainFrame extends javax.swing.JFrame {
         constraints.fill = GridBagConstraints.BOTH;
         homePanel.add(setupBottomPanel(), constraints);
     }
-    
+
     private JPanel setupTopPanel() {
         Dimension dim = new Dimension(this.getSize().width / 8, 25);
         JPanel topPanel = new JPanel();
@@ -108,35 +159,6 @@ public class MainFrame extends javax.swing.JFrame {
         topPanel.add(lbType);
 
         topPanel.add(new JLabel());
-        
-        JPanel panelBtnWishLsit = new JPanel();
-        panelBtnWishLsit.setBackground(topPanel.getBackground());
-        JButton btnWishList = new JButton("WishListPanel");
-        btnWishList.addMouseListener(new MouseListener() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                loadWishListPanel();
-            }
-
-            @Override
-            public void mousePressed(MouseEvent e) {
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-            }
-
-            @Override
-            public void mouseEntered(MouseEvent e) {
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-            }
-        });
-        btnWishList.setToolTipText("WishList");
-        panelBtnWishLsit.add(btnWishList);
-        topPanel.add(panelBtnWishLsit);
 
         // Bottom Row
         JTextField tfFrom = new JTextField();
@@ -155,13 +177,16 @@ public class MainFrame extends javax.swing.JFrame {
         tfReturn.setToolTipText("Return");
         topPanel.add(tfReturn);
 
-        JTextField tfPassenger = new JTextField();
-        tfPassenger.setToolTipText("Passenger");
-        topPanel.add(tfPassenger);
+        JComboBox cbPassenger = new JComboBox<String>();
+        for(int i = 1; i<=10; i++){
+            cbPassenger.addItem(i);
+        }
+        cbPassenger.setToolTipText("Passenger");
+        topPanel.add(cbPassenger);
 
-        JTextField tfType = new JTextField();
-        tfType.setToolTipText("Type");
-        topPanel.add(tfType);
+        JComboBox cbType = new JComboBox();
+        cbType.setToolTipText("Type");
+        topPanel.add(cbType);
 
         JButton btnSearch = new JButton("Search");
         btnSearch.addMouseListener(new MouseListener() {
@@ -188,8 +213,6 @@ public class MainFrame extends javax.swing.JFrame {
         btnSearch.setToolTipText("Search");
         topPanel.add(btnSearch);
 
-        topPanel.add(new JLabel());
-
         return topPanel;
     }
 
@@ -200,7 +223,7 @@ public class MainFrame extends javax.swing.JFrame {
         scrollInsidePanel.setBackground(Color.white);
         scrollInsidePanel.setLayout(new BoxLayout(scrollInsidePanel, BoxLayout.Y_AXIS));
 
-        ArrayList<JPanel> scrollElements = getScrollPanelElements();
+        ArrayList<JPanel> scrollElements = getScrollPanelElements(true);
         for (JPanel p : scrollElements) {
             p.setPreferredSize(new Dimension(1, 227));
             scrollInsidePanel.add(p);
@@ -245,16 +268,26 @@ public class MainFrame extends javax.swing.JFrame {
         return bottomPanel;
     }
 
-    private ArrayList<JPanel> getScrollPanelElements() {
+    private ArrayList<JPanel> getScrollPanelElements(boolean loadCache) {
         // Based on API response when searched returns a list of
         // panels matching the number of flights returned
         ArrayList<JPanel> tmp = new ArrayList<>();
-        tmp.add(new FlightListElementPanel(this, homePanel));
-        tmp.add(new FlightListElementPanel(this, homePanel));
-        tmp.add(new FlightListElementPanel(this, homePanel));
-        tmp.add(new FlightListElementPanel(this, homePanel));
-        tmp.add(new FlightListElementPanel(this, homePanel));
-        tmp.add(new FlightListElementPanel(this, homePanel));
+
+        Response r;
+
+        if (loadCache) {
+            r = parsearJSON(leerJSON(rutaCache));
+        } else {
+            //peticionAPI(, , , , , );
+            r = parsearJSON(leerJSON(rutaExample));
+        }
+
+        ArrayList<FlightDetails> flightDetails = getFrontEndDetails(r.getBest_flights(), r.getOther_flights());
+
+        for (FlightDetails f : flightDetails) {
+            tmp.add(new FlightListElementPanel(this, homePanel, f));
+        }
+
         return tmp;
     }
 
@@ -264,15 +297,84 @@ public class MainFrame extends javax.swing.JFrame {
         }
     }
 
-    private void loadWishListPanel() {
-        this.remove(homePanel);
-        this.add(new WishListPanel(this));
-        revalidate();
-        repaint();
-    }
-
     public JPanel getHomePanel() {
         return homePanel;
+    }
+
+    private void peticionAPI(String departureId, String arrivalId, String departureDate, String returnDate, String currency, String type) {
+        try {
+
+            String engine = "google_flights";
+            String api_key = "cb86689dbb1f68e6363ba7c5ecf4604177d0e21cd801037bd8e35ef77a43e271";
+
+            String link = "https://serpapi.com/search.json?engine=" + engine + "&departure_id=" + departureId + "&arrival_id=" + arrivalId + "&gl=us&hl=en";
+            if (currency != null && !currency.isBlank()) {
+                link += "&currency=" + currency;
+            }
+            if (type != null && !type.isBlank()) {
+                link += "&type=" + type;
+            }
+            if (departureDate != null && !departureDate.isBlank()) {
+                link += "&outbound_date=" + departureDate;
+            }
+            if (returnDate != null && !returnDate.isBlank()) {
+                link += "&return_date=" + returnDate;
+            }
+            link += "&api_key=" + api_key;
+
+            System.out.println(link);
+            URL url = new URL(link);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("Accept", "application/json");
+
+            if (conn.getResponseCode() != 200) {
+                throw new RuntimeException("Failed : HTTP Error code : "
+                        + conn.getResponseCode());
+            }
+            InputStreamReader in = new InputStreamReader(conn.getInputStream());
+            BufferedReader br = new BufferedReader(in);
+            String output;
+            String result = "";
+            while ((output = br.readLine()) != null) {
+                result += output;
+            }
+            System.out.println(result);
+            guardarJSON(result);
+            conn.disconnect();
+        } catch (Exception e) {
+            System.out.println("Exception in NetClientGet:- " + e);
+        }
+    }
+
+    private void guardarJSON(String data) {
+        String ruta = "./src/main/java/org/example/cache/data.json";
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(ruta));
+            writer.write(data);
+            writer.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Response parsearJSON(String json) {
+        Gson gson = new Gson();
+        return gson.fromJson(json, Response.class);
+    }
+
+    private String leerJSON(String ruta) {
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(ruta));
+            String line;
+            String result = "";
+            while ((line = reader.readLine()) != null) {
+                result += line;
+            }
+            return result;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
