@@ -11,6 +11,7 @@ import com.mycompany.how2fly.pojo.Response;
 import com.mycompany.how2fly.pojo.frontend.FlightDetails;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -28,6 +29,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -44,6 +46,7 @@ import javax.swing.ScrollPaneConstants;
  */
 public class MainFrame extends javax.swing.JFrame {
 
+    public static Font defaultFontBold, defaultFontSize2, defaultFontSize5;
     private String rutaExample = "./src/main/java/com/mycompany/how2fly/data/example.json";
     private String rutaCache = "./src/main/java/com/mycompany/how2fly/cache/cache.json";
     private JPanel homePanel;
@@ -69,30 +72,33 @@ public class MainFrame extends javax.swing.JFrame {
 
         this.setExtendedState(MAXIMIZED_BOTH);
     }
-    private void checkFields(){
-        
+
+    private void checkFields() {
+
     }
-    
-    private boolean fieldsFilled(ArrayList<JTextField> tfs){
-        for(JTextField tf : tfs){
-            if(tf.getText().isBlank()){
+
+    private boolean fieldsFilled(ArrayList<JTextField> tfs) {
+        for (JTextField tf : tfs) {
+            if (tf.getText().isBlank()) {
                 return false;
             }
         }
         return true;
     }
-    private boolean fieldsFromToDiff(JTextField tfFrom, JTextField tfTo){
+
+    private boolean fieldsFromToDiff(JTextField tfFrom, JTextField tfTo) {
         return !tfFrom.getText().equals(tfTo.getText());
     }
-    private LocalDate parseDate(String date){
+
+    private LocalDate parseDate(String date) {
         String[] data = date.split("-");
-        if(data.length==0){
+        if (data.length == 0) {
             data = date.split("/");
         }
-        if(data.length==0){
+        if (data.length == 0) {
             return LocalDate.now();
         }
-        return LocalDate.of(Integer.parseInt(data[0]),Integer.parseInt(data[1]),Integer.parseInt(data[2]));
+        return LocalDate.of(Integer.parseInt(data[0]), Integer.parseInt(data[1]), Integer.parseInt(data[2]));
     }
 
     private ArrayList<FlightDetails> getFrontEndDetails(ArrayList<BestFlights> bestFlights, ArrayList<OtherFlights> otherFlights) {
@@ -134,61 +140,88 @@ public class MainFrame extends javax.swing.JFrame {
     private JPanel setupTopPanel() {
         Dimension dim = new Dimension(this.getSize().width / 8, 25);
         JPanel topPanel = new JPanel();
+        topPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         topPanel.setBackground(Color.blue);
         topPanel.setLayout(new GridLayout(2, 7));
 
         // Top Row
         JLabel lbFrom = new JLabel("From:");
+        
+        defaultFontBold = new Font(lbFrom.getFont().getName(), Font.BOLD, lbFrom.getFont().getSize() + 5);
+        defaultFontSize5 = new Font(lbFrom.getFont().getName(), lbFrom.getFont().getStyle(), lbFrom.getFont().getSize() + 5); 
+        defaultFontSize2 = new Font(lbFrom.getFont().getName(), lbFrom.getFont().getStyle(), lbFrom.getFont().getSize() + 2); 
+        
+        lbFrom.setFont(defaultFontBold);
         lbFrom.setSize(dim);
+        lbFrom.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         lbFrom.setPreferredSize(dim);
         topPanel.add(lbFrom);
 
         JLabel lbTo = new JLabel("To:");
+        lbTo.setFont(defaultFontBold);
         topPanel.add(lbTo);
 
         JLabel lbGoing = new JLabel("Going:");
+        lbGoing.setFont(defaultFontBold);
         topPanel.add(lbGoing);
 
         JLabel lbReturn = new JLabel("Return:");
+        lbReturn.setFont(defaultFontBold);
         topPanel.add(lbReturn);
 
         JLabel lbPassenger = new JLabel("Passenger:");
+        lbPassenger.setFont(defaultFontBold);
         topPanel.add(lbPassenger);
 
         JLabel lbType = new JLabel("Type:");
+        lbType.setFont(defaultFontBold);
         topPanel.add(lbType);
 
         topPanel.add(new JLabel());
 
         // Bottom Row
         JTextField tfFrom = new JTextField();
+        tfFrom.setFont(defaultFontSize5);
+        tfFrom.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         tfFrom.setToolTipText("From");
         topPanel.add(tfFrom);
 
         JTextField tfTo = new JTextField();
+        tfTo.setFont(defaultFontSize5);
+        tfTo.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         tfTo.setToolTipText("To");
         topPanel.add(tfTo);
 
         JTextField tfGoing = new JTextField();
+        tfGoing.setFont(defaultFontSize5);
+        tfGoing.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         tfGoing.setToolTipText("Going");
         topPanel.add(tfGoing);
 
         JTextField tfReturn = new JTextField();
+        tfReturn.setFont(defaultFontSize5);
+        tfReturn.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         tfReturn.setToolTipText("Return");
         topPanel.add(tfReturn);
 
         JComboBox cbPassenger = new JComboBox<String>();
-        for(int i = 1; i<=10; i++){
+        cbPassenger.setFont(defaultFontSize5);
+        cbPassenger.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        for (int i = 1; i <= 10; i++) {
             cbPassenger.addItem(i);
         }
         cbPassenger.setToolTipText("Passenger");
         topPanel.add(cbPassenger);
 
         JComboBox cbType = new JComboBox();
+        cbType.setFont(defaultFontSize5);
+        cbType.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         cbType.setToolTipText("Type");
         topPanel.add(cbType);
 
         JButton btnSearch = new JButton("Search");
+        btnSearch.setFont(defaultFontSize5);
+        btnSearch.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         btnSearch.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -218,6 +251,7 @@ public class MainFrame extends javax.swing.JFrame {
 
     private JPanel setupBottomPanel() {
         JPanel bottomPanel = new JPanel();
+        bottomPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         bottomPanel.setBackground(Color.red);
         JPanel scrollInsidePanel = new JPanel();
         scrollInsidePanel.setBackground(Color.white);
