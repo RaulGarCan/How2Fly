@@ -4,12 +4,16 @@
  */
 package com.mycompany.how2fly;
 
+import com.mycompany.how2fly.pojo.Flight;
 import com.mycompany.how2fly.pojo.frontend.FlightDetails;
 import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.Image;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -27,9 +31,10 @@ public class FlightDetailsPanel extends javax.swing.JPanel {
     /**
      * Creates new form FlightDetailsPanel
      */
-    public FlightDetailsPanel(MainFrame parent, JPanel context) {
+    public FlightDetailsPanel(MainFrame parent, JPanel context, FlightDetails flightDetails) {
         this.parent = parent;
         this.context = context;
+        this.flightDetails = flightDetails;
         initComponents();
         start();
     }
@@ -41,6 +46,8 @@ public class FlightDetailsPanel extends javax.swing.JPanel {
         JPanel detailsPanel = new JPanel();
         detailsPanel.setBackground(Color.red);
         JButton btnBack = new JButton("Back");
+
+        setupDetailsPanel(detailsPanel);
 
         btnBack.addMouseListener(new MouseListener() {
             @Override
@@ -66,6 +73,29 @@ public class FlightDetailsPanel extends javax.swing.JPanel {
         });
 
         JButton btnBook = new JButton("Book Now!");
+
+        btnBook.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+            }
+        });
 
         GridBagLayout detailsLayout = new GridBagLayout();
         GridBagConstraints c = new GridBagConstraints();
@@ -98,6 +128,65 @@ public class FlightDetailsPanel extends javax.swing.JPanel {
         this.add(btnBook, c);
 
         loadFlightData();
+    }
+
+    private void setupDetailsPanel(JPanel detailsPanel) {
+        GridLayout detailsLayout = new GridLayout(1, flightDetails.getFlights().size());
+        detailsPanel.setLayout(detailsLayout);
+
+        for (int i = 0; i < flightDetails.getFlights().size(); i++) {
+            JPanel column = new JPanel();
+            column.setBackground(Color.lightGray);
+            column.setLayout(new GridLayout(10,1));
+            
+            Flight f = flightDetails.getFlights().get(i);
+            JLabel lbFrom = new JLabel("From");
+            lbFrom.setText("From: " + f.getDeparture_airport().getName() + " (" + f.getDeparture_airport().getId() + ")");
+
+            JLabel lbGoingTime = new JLabel("99:99");
+            lbGoingTime.setText("Going Time: "+f.getDeparture_airport().getTime());
+            
+            JLabel lbTo = new JLabel("To");
+            lbTo.setText("To: " + f.getArrival_airport().getName()+"("+f.getArrival_airport().getId()+")");
+
+            JLabel lbArriveTime = new JLabel("99:99");
+            lbArriveTime.setText("Arrive Time: "+f.getArrival_airport().getTime());
+            
+            JLabel lbAirplane = new JLabel("Airplane");
+            lbAirplane.setText("Airplane: "+f.getAirplane());
+
+            JLabel lbAirline = new JLabel("Airline");
+            lbAirline.setText("Airline: "+f.getAirline());
+            Image airlineImg = FlightListElementPanel.createImageWithURL(f.getAirline_logo());
+            ImageIcon airlineLogo = new ImageIcon(FlightListElementPanel.rescaleImage(airlineImg, 50, 50));
+            lbAirline.setIcon(airlineLogo);
+
+            JLabel lbTravelClass = new JLabel("Travel Class");
+            lbTravelClass.setText("Travel Class: "+f.getTravel_class());
+            
+            JLabel lbDelayed = new JLabel("Delayed");
+            lbDelayed.setText("Often Delayed: "+f.isOften_delayed_by_over_30_min());
+            
+            JLabel lbOvernight = new JLabel("Overnight");
+            lbOvernight.setText("Overnight: "+f.isOvernight());
+            
+            JLabel lbLegRoom = new JLabel("Leg Room");
+            lbLegRoom.setText("Leg Room: "+f.getLegroom());
+            
+            column.add(lbFrom);
+            column.add(lbGoingTime);
+            column.add(lbTo);
+            column.add(lbArriveTime);
+            column.add(lbAirplane);
+            column.add(lbAirline);
+            column.add(lbTravelClass);
+            column.add(lbDelayed);
+            column.add(lbOvernight);
+            column.add(lbLegRoom);
+            
+            detailsPanel.add(column);
+        }
+
     }
 
     private void loadFlightData() {

@@ -200,11 +200,11 @@ public class FlightListElementPanel extends javax.swing.JPanel {
 
     }
 
-    private Image rescaleImage(Image image, int width, int height) {
+    public static Image rescaleImage(Image image, int width, int height) {
         return image.getScaledInstance(width, height, Image.SCALE_SMOOTH);
     }
 
-    private Image createImageWithURL(String url) {
+    public static Image createImageWithURL(String url) {
         try {
             return ImageIO.read(new URL(url));
         } catch (IOException ex) {
@@ -225,7 +225,7 @@ public class FlightListElementPanel extends javax.swing.JPanel {
             @Override
             public void mouseClicked(MouseEvent e) {
                 parent.remove(context);
-                parent.add(new FlightDetailsPanel(parent, context));
+                parent.add(new FlightDetailsPanel(parent, context, flightDetails));
                 parent.revalidate();
                 parent.repaint();
             }

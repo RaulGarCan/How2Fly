@@ -9,7 +9,7 @@ public class Flight {
     private String airplane;
     private String airline;
     private String airline_logo;
-    private  String travel_class;
+    private String travel_class;
     private String flight_number;
     private ArrayList<String> extensions;
     private ArrayList<String> tickets_also_sold_by;

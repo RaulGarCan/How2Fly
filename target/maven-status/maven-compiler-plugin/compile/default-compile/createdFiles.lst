@@ -4,6 +4,7 @@ com\mycompany\how2fly\pojo\SearchParameters.class
 com\mycompany\how2fly\pojo\Response.class
 com\mycompany\how2fly\pojo\Airport.class
 com\mycompany\how2fly\pojo\Flight.class
+com\mycompany\how2fly\FlightDetailsPanel$2.class
 com\mycompany\how2fly\FlightDetailsPanel.class
 com\mycompany\how2fly\FlightListElementPanel$1.class
 com\mycompany\how2fly\MainFrame.class
