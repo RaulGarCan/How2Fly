@@ -41,6 +41,7 @@ public class FlightDetailsPanel extends javax.swing.JPanel {
 
     private void start() {
         JLabel lbHeader = new JLabel("From - To");
+        lbHeader.setText(flightDetails.getFlights().getFirst().getDeparture_airport().getId()+" - "+flightDetails.getFlights().getLast().getArrival_airport().getId());
         lbHeader.setOpaque(true);
         lbHeader.setBackground(Color.green);
         JPanel detailsPanel = new JPanel();

@@ -177,8 +177,8 @@ public class FlightListElementPanel extends javax.swing.JPanel {
             result += cents;
         }
         lbPrice.setText(result + "€");
-        LocalTime goingTime = parseTime(flightDetails.getFlights().getFirst().getDeparture_airport().getTime().split(" ")[1]);
-        LocalTime arriveTime = parseTime(flightDetails.getFlights().getLast().getArrival_airport().getTime().split(" ")[1]);
+        LocalDateTime goingTime = parseDateTime(flightDetails.getFlights().getFirst().getDeparture_airport().getTime().split(" "));
+        LocalDateTime arriveTime = parseDateTime(flightDetails.getFlights().getLast().getArrival_airport().getTime().split(" "));
         long hours = goingTime.until(arriveTime, ChronoUnit.MINUTES) / 60;
         long minutes = goingTime.until(arriveTime, ChronoUnit.MINUTES) % 60;
         String duration = "";
@@ -190,8 +190,8 @@ public class FlightListElementPanel extends javax.swing.JPanel {
         }
         lbDuration.setText(duration);
         lbLayovers.setText("Layovers: " + layovers);
-        lbGoingTime.setText(goingTime.toString());
-        lbArriveTime.setText(arriveTime.toString());
+        lbGoingTime.setText(""+goingTime.getHour()+":"+goingTime.getMinute());
+        lbArriveTime.setText(""+arriveTime.getHour()+":"+arriveTime.getMinute());
         lbAirline.setText(flightDetails.getFlights().getFirst().getAirline());
 
         Image airlineIcon = createImageWithURL(flightDetails.getFlights().getFirst().getAirline_logo());
@@ -218,6 +218,18 @@ public class FlightListElementPanel extends javax.swing.JPanel {
         int hours = Integer.parseInt(data[0]);
         int minutes = Integer.parseInt(data[1]);
         return LocalTime.of(hours, minutes);
+    }
+    private LocalDateTime parseDateTime(String[] data) {
+        String date = data[0];
+        String time = data[1];
+        String[] dataTime = time.split(":");
+        int hours = Integer.parseInt(dataTime[0]);
+        int minutes = Integer.parseInt(dataTime[1]);
+        String[] dataDate = date.split("-");
+        int years = Integer.parseInt(dataDate[0]);
+        int months = Integer.parseInt(dataDate[1]);
+        int days = Integer.parseInt(dataDate[2]);
+        return LocalDateTime.of(years, months, days, hours, minutes);
     }
 
     private void sendToDetailsListener(JPanel panel) {

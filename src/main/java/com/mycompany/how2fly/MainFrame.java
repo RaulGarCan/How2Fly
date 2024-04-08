@@ -17,6 +17,8 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.Toolkit;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.BufferedReader;
@@ -36,6 +38,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
@@ -46,9 +49,12 @@ import javax.swing.ScrollPaneConstants;
  */
 public class MainFrame extends javax.swing.JFrame {
 
-    public static Font defaultFontBold, defaultFontSize2, defaultFontSize5;
-    private String rutaExample = "./src/main/java/com/mycompany/how2fly/data/example.json";
-    private String rutaCache = "./src/main/java/com/mycompany/how2fly/cache/cache.json";
+    JPanel bottomPanel;
+    private JTextField tfFrom, tfTo, tfGoing, tfReturn;
+    private JComboBox cbPassenger, cbType;
+    public static Font defaultFontSize5Bold, defaultFontSize2, defaultFontSize5;
+    private final String rutaExample = "./src/main/java/com/mycompany/how2fly/data/example.json";
+    private final String rutaCache = "./src/main/java/com/mycompany/how2fly/cache/cache.json";
     private JPanel homePanel;
     private FlightDetailsPanel flightDetailsPanel;
     private final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -73,11 +79,20 @@ public class MainFrame extends javax.swing.JFrame {
         this.setExtendedState(MAXIMIZED_BOTH);
     }
 
-    private void checkFields() {
-
+    private boolean checkFields(JTextField[] tfs) {
+        if (!fieldsFilled(tfs)) {
+            return false;
+        }
+        if (!fieldsFromToDiff(tfFrom, tfTo)) {
+            return false;
+        }
+        if (!returnDateHigerOrEqualToGoing(tfGoing, tfReturn)) {
+            return false;
+        }
+        return true;
     }
 
-    private boolean fieldsFilled(ArrayList<JTextField> tfs) {
+    private boolean fieldsFilled(JTextField[] tfs) {
         for (JTextField tf : tfs) {
             if (tf.getText().isBlank()) {
                 return false;
@@ -88,6 +103,15 @@ public class MainFrame extends javax.swing.JFrame {
 
     private boolean fieldsFromToDiff(JTextField tfFrom, JTextField tfTo) {
         return !tfFrom.getText().equals(tfTo.getText());
+    }
+
+    private boolean returnDateHigerOrEqualToGoing(JTextField tfGoing, JTextField tfReturn) {
+        LocalDate goingDate = parseDate(tfGoing.getText());
+        LocalDate returnDate = parseDate(tfReturn.getText());
+        if (goingDate.until(returnDate).isNegative()) {
+            return false;
+        }
+        return true;
     }
 
     private LocalDate parseDate(String date) {
@@ -103,8 +127,10 @@ public class MainFrame extends javax.swing.JFrame {
 
     private ArrayList<FlightDetails> getFrontEndDetails(ArrayList<BestFlights> bestFlights, ArrayList<OtherFlights> otherFlights) {
         ArrayList<FlightDetails> flightDetails = new ArrayList<>();
-        for (BestFlights flights : bestFlights) {
-            flightDetails.add(new FlightDetails(flights));
+        if (bestFlights != null) {
+            for (BestFlights flights : bestFlights) {
+                flightDetails.add(new FlightDetails(flights));
+            }
         }
         for (OtherFlights flights : otherFlights) {
             flightDetails.add(new FlightDetails(flights));
@@ -134,7 +160,7 @@ public class MainFrame extends javax.swing.JFrame {
         constraints.weighty = 1;
         constraints.weightx = 1;
         constraints.fill = GridBagConstraints.BOTH;
-        homePanel.add(setupBottomPanel(), constraints);
+        homePanel.add(setupBottomPanel(getScrollPanelElements()), constraints);
     }
 
     private JPanel setupTopPanel() {
@@ -146,65 +172,65 @@ public class MainFrame extends javax.swing.JFrame {
 
         // Top Row
         JLabel lbFrom = new JLabel("From:");
-        
-        defaultFontBold = new Font(lbFrom.getFont().getName(), Font.BOLD, lbFrom.getFont().getSize() + 5);
-        defaultFontSize5 = new Font(lbFrom.getFont().getName(), lbFrom.getFont().getStyle(), lbFrom.getFont().getSize() + 5); 
-        defaultFontSize2 = new Font(lbFrom.getFont().getName(), lbFrom.getFont().getStyle(), lbFrom.getFont().getSize() + 2); 
-        
-        lbFrom.setFont(defaultFontBold);
+
+        defaultFontSize5Bold = new Font(lbFrom.getFont().getName(), Font.BOLD, lbFrom.getFont().getSize() + 5);
+        defaultFontSize5 = new Font(lbFrom.getFont().getName(), lbFrom.getFont().getStyle(), lbFrom.getFont().getSize() + 5);
+        defaultFontSize2 = new Font(lbFrom.getFont().getName(), lbFrom.getFont().getStyle(), lbFrom.getFont().getSize() + 2);
+
+        lbFrom.setFont(defaultFontSize5Bold);
         lbFrom.setSize(dim);
         lbFrom.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         lbFrom.setPreferredSize(dim);
         topPanel.add(lbFrom);
 
         JLabel lbTo = new JLabel("To:");
-        lbTo.setFont(defaultFontBold);
+        lbTo.setFont(defaultFontSize5Bold);
         topPanel.add(lbTo);
 
         JLabel lbGoing = new JLabel("Going:");
-        lbGoing.setFont(defaultFontBold);
+        lbGoing.setFont(defaultFontSize5Bold);
         topPanel.add(lbGoing);
 
         JLabel lbReturn = new JLabel("Return:");
-        lbReturn.setFont(defaultFontBold);
+        lbReturn.setFont(defaultFontSize5Bold);
         topPanel.add(lbReturn);
 
         JLabel lbPassenger = new JLabel("Passenger:");
-        lbPassenger.setFont(defaultFontBold);
+        lbPassenger.setFont(defaultFontSize5Bold);
         topPanel.add(lbPassenger);
 
         JLabel lbType = new JLabel("Type:");
-        lbType.setFont(defaultFontBold);
+        lbType.setFont(defaultFontSize5Bold);
         topPanel.add(lbType);
 
         topPanel.add(new JLabel());
 
         // Bottom Row
-        JTextField tfFrom = new JTextField();
+        tfFrom = new JTextField();
         tfFrom.setFont(defaultFontSize5);
         tfFrom.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         tfFrom.setToolTipText("From");
         topPanel.add(tfFrom);
 
-        JTextField tfTo = new JTextField();
+        tfTo = new JTextField();
         tfTo.setFont(defaultFontSize5);
         tfTo.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         tfTo.setToolTipText("To");
         topPanel.add(tfTo);
 
-        JTextField tfGoing = new JTextField();
+        tfGoing = new JTextField();
         tfGoing.setFont(defaultFontSize5);
         tfGoing.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         tfGoing.setToolTipText("Going");
         topPanel.add(tfGoing);
 
-        JTextField tfReturn = new JTextField();
+        tfReturn = new JTextField();
         tfReturn.setFont(defaultFontSize5);
         tfReturn.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         tfReturn.setToolTipText("Return");
         topPanel.add(tfReturn);
 
-        JComboBox cbPassenger = new JComboBox<String>();
+        cbPassenger = new JComboBox<String>();
         cbPassenger.setFont(defaultFontSize5);
         cbPassenger.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         for (int i = 1; i <= 10; i++) {
@@ -213,10 +239,24 @@ public class MainFrame extends javax.swing.JFrame {
         cbPassenger.setToolTipText("Passenger");
         topPanel.add(cbPassenger);
 
-        JComboBox cbType = new JComboBox();
+        cbType = new JComboBox();
         cbType.setFont(defaultFontSize5);
         cbType.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         cbType.setToolTipText("Type");
+        cbType.addItem("Round Trip");
+        cbType.addItem("One Way");
+        cbType.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                if (cbType.getSelectedItem().equals("One Way")) {
+                    tfReturn.setEnabled(false);
+                } else {
+                    if (!tfReturn.isEnabled()) {
+                        tfReturn.setEnabled(true);
+                    }
+                }
+            }
+        });
         topPanel.add(cbType);
 
         JButton btnSearch = new JButton("Search");
@@ -225,6 +265,34 @@ public class MainFrame extends javax.swing.JFrame {
         btnSearch.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
+                JTextField[] tfs = {tfFrom, tfTo, tfGoing, tfReturn};
+                if (checkFields(tfs)) {
+                    String from = tfFrom.getText();
+                    String to = tfTo.getText();
+                    String going = tfGoing.getText();
+                    String returnal = null;
+                    if (tfReturn.isEnabled()) {
+                        returnal = tfReturn.getText();
+                    }
+                    String passengers = cbPassenger.getSelectedItem().toString();
+                    String type = cbType.getSelectedItem().toString();
+
+                    homePanel.remove(bottomPanel);
+                    ArrayList<JPanel> scrollElements = getScrollPanelElements(from, to, going, returnal, type, passengers);
+                    bottomPanel = MainFrame.this.setupBottomPanel(scrollElements);
+                    GridBagConstraints c = new GridBagConstraints();
+                    c.gridx = 0;
+                    c.gridy = 1;
+                    c.gridheight = 3;
+                    c.gridwidth = 1;
+                    c.weighty = 1;
+                    c.weightx = 1;
+                    c.fill = GridBagConstraints.BOTH;
+                    homePanel.add(bottomPanel, c);
+                    
+                    MainFrame.this.revalidate();
+                    MainFrame.this.repaint();
+                }
             }
 
             @Override
@@ -249,15 +317,14 @@ public class MainFrame extends javax.swing.JFrame {
         return topPanel;
     }
 
-    private JPanel setupBottomPanel() {
-        JPanel bottomPanel = new JPanel();
+    private JPanel setupBottomPanel(ArrayList<JPanel> scrollElements) {
+        bottomPanel = new JPanel();
         bottomPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         bottomPanel.setBackground(Color.red);
         JPanel scrollInsidePanel = new JPanel();
         scrollInsidePanel.setBackground(Color.white);
         scrollInsidePanel.setLayout(new BoxLayout(scrollInsidePanel, BoxLayout.Y_AXIS));
 
-        ArrayList<JPanel> scrollElements = getScrollPanelElements(true);
         for (JPanel p : scrollElements) {
             p.setPreferredSize(new Dimension(1, 227));
             scrollInsidePanel.add(p);
@@ -265,7 +332,12 @@ public class MainFrame extends javax.swing.JFrame {
 
         JScrollPane scrollPanel = new JScrollPane(scrollInsidePanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPanel.setBackground(Color.yellow);
-        scrollPanel.getVerticalScrollBar().setUnitIncrement(20);
+
+        JScrollBar verticalScroll = scrollPanel.getVerticalScrollBar();
+        verticalScroll.setUnitIncrement(20);
+        verticalScroll.setPreferredSize(new Dimension(verticalScroll.getPreferredSize().width - 5, verticalScroll.getPreferredSize().height));
+        scrollPanel.setVerticalScrollBar(verticalScroll);
+
         JPanel filtersPanel = new JPanel();
         filtersPanel.setBackground(Color.cyan);
         filtersPanel.setLayout(new GridLayout(0, 1));
@@ -302,19 +374,29 @@ public class MainFrame extends javax.swing.JFrame {
         return bottomPanel;
     }
 
-    private ArrayList<JPanel> getScrollPanelElements(boolean loadCache) {
+    private ArrayList<JPanel> getScrollPanelElements() {
         // Based on API response when searched returns a list of
         // panels matching the number of flights returned
         ArrayList<JPanel> tmp = new ArrayList<>();
 
-        Response r;
+        Response r = parsearJSON(leerJSON(rutaCache));
 
-        if (loadCache) {
-            r = parsearJSON(leerJSON(rutaCache));
-        } else {
-            //peticionAPI(, , , , , );
-            r = parsearJSON(leerJSON(rutaExample));
+        ArrayList<FlightDetails> flightDetails = getFrontEndDetails(r.getBest_flights(), r.getOther_flights());
+
+        for (FlightDetails f : flightDetails) {
+            tmp.add(new FlightListElementPanel(this, homePanel, f));
         }
+
+        return tmp;
+    }
+
+    private ArrayList<JPanel> getScrollPanelElements(String from, String to, String going, String returnal, String type, String passengers) {
+        // Based on API response when searched returns a list of
+        // panels matching the number of flights returned
+        ArrayList<JPanel> tmp = new ArrayList<>();
+
+        peticionAPI(from, to, going, returnal, "EUR", type, passengers);
+        Response r = parsearJSON(leerJSON(rutaExample));
 
         ArrayList<FlightDetails> flightDetails = getFrontEndDetails(r.getBest_flights(), r.getOther_flights());
 
@@ -335,19 +417,22 @@ public class MainFrame extends javax.swing.JFrame {
         return homePanel;
     }
 
-    private void peticionAPI(String departureId, String arrivalId, String departureDate, String returnDate, String currency, String type) {
+    private void peticionAPI(String departureId, String arrivalId, String departureDate, String returnDate, String currency, String type, String passengers) {
+        if (type.equalsIgnoreCase("Round Trip")) {
+            type = "1";
+        } else {
+            type = "2";
+        }
         try {
 
             String engine = "google_flights";
             String api_key = "cb86689dbb1f68e6363ba7c5ecf4604177d0e21cd801037bd8e35ef77a43e271";
 
-            String link = "https://serpapi.com/search.json?engine=" + engine + "&departure_id=" + departureId + "&arrival_id=" + arrivalId + "&gl=us&hl=en";
+            String link = "https://serpapi.com/search.json?engine=" + engine + "&departure_id=" + departureId + "&arrival_id=" + arrivalId + "&gl=us&hl=en&adults=" + passengers;
             if (currency != null && !currency.isBlank()) {
                 link += "&currency=" + currency;
             }
-            if (type != null && !type.isBlank()) {
-                link += "&type=" + type;
-            }
+            link += "&type=" + type;
             if (departureDate != null && !departureDate.isBlank()) {
                 link += "&outbound_date=" + departureDate;
             }
@@ -382,9 +467,8 @@ public class MainFrame extends javax.swing.JFrame {
     }
 
     private void guardarJSON(String data) {
-        String ruta = "./src/main/java/org/example/cache/data.json";
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(ruta));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(rutaExample));
             writer.write(data);
             writer.close();
         } catch (IOException e) {
