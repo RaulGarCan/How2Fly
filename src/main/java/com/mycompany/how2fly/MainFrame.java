@@ -15,6 +15,7 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Image;
 import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.event.ItemEvent;
@@ -29,10 +30,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.time.DateTimeException;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.ArrayList;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -49,14 +53,15 @@ import javax.swing.ScrollPaneConstants;
  */
 public class MainFrame extends javax.swing.JFrame {
 
+    private ArrayList<FlightDetails> flights;
+    private ArrayList<FlightDetails> filteredFlights;
     JPanel bottomPanel;
     private JTextField tfFrom, tfTo, tfGoing, tfReturn;
     private JComboBox cbPassenger, cbType;
-    public static Font defaultFontSize5Bold, defaultFontSize2, defaultFontSize5;
-    private final String rutaExample = "./src/main/java/com/mycompany/how2fly/data/example.json";
-    private final String rutaCache = "./src/main/java/com/mycompany/how2fly/cache/cache.json";
+    public static Font defaultFontSize5Bold, defaultFontSize2, defaultFontSize5, defaultFontHeader, defaultFontHeaderBold;
+    private final String pathExample = "./src/main/java/com/mycompany/how2fly/data/example.json";
+    private final String pathCache = "./src/main/java/com/mycompany/how2fly/cache/cache.json";
     private JPanel homePanel;
-    private FlightDetailsPanel flightDetailsPanel;
     private final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 
     /**
@@ -86,7 +91,31 @@ public class MainFrame extends javax.swing.JFrame {
         if (!fieldsFromToDiff(tfFrom, tfTo)) {
             return false;
         }
+        if (!checkDateFormat(tfGoing) || !checkDateFormat(tfReturn)) {
+            return false;
+        }
         if (!returnDateHigerOrEqualToGoing(tfGoing, tfReturn)) {
+            return false;
+        }
+        return true;
+    }
+
+    private boolean checkDateFormat(JTextField tfDate) {
+        String[] dateParts = tfDate.getText().split("-");
+        if (dateParts.length != 3) {
+            return false;
+        }
+        if (dateParts[0].length() != 4) {
+            return false;
+        }
+        if (dateParts[1].length() != 2 || dateParts[2].length() != 2) {
+            return false;
+        }
+        try {
+            LocalDate test = LocalDate.of(Integer.parseInt(dateParts[0]), Integer.parseInt(dateParts[1]), Integer.parseInt(dateParts[2]));
+            System.out.println(test.toString());
+        } catch (DateTimeException | NumberFormatException ex) {
+            System.out.println(ex);
             return false;
         }
         return true;
@@ -128,12 +157,12 @@ public class MainFrame extends javax.swing.JFrame {
     private ArrayList<FlightDetails> getFrontEndDetails(ArrayList<BestFlights> bestFlights, ArrayList<OtherFlights> otherFlights) {
         ArrayList<FlightDetails> flightDetails = new ArrayList<>();
         if (bestFlights != null) {
-            for (BestFlights flights : bestFlights) {
-                flightDetails.add(new FlightDetails(flights));
+            for (BestFlights f : bestFlights) {
+                flightDetails.add(new FlightDetails(f));
             }
         }
-        for (OtherFlights flights : otherFlights) {
-            flightDetails.add(new FlightDetails(flights));
+        for (OtherFlights f : otherFlights) {
+            flightDetails.add(new FlightDetails(f));
         }
         return flightDetails;
     }
@@ -176,6 +205,8 @@ public class MainFrame extends javax.swing.JFrame {
         defaultFontSize5Bold = new Font(lbFrom.getFont().getName(), Font.BOLD, lbFrom.getFont().getSize() + 5);
         defaultFontSize5 = new Font(lbFrom.getFont().getName(), lbFrom.getFont().getStyle(), lbFrom.getFont().getSize() + 5);
         defaultFontSize2 = new Font(lbFrom.getFont().getName(), lbFrom.getFont().getStyle(), lbFrom.getFont().getSize() + 2);
+        defaultFontHeaderBold = new Font(lbFrom.getFont().getName(), Font.BOLD, lbFrom.getFont().getSize() + 10);
+        defaultFontHeader = new Font(lbFrom.getFont().getName(), lbFrom.getFont().getStyle(), lbFrom.getFont().getSize() + 10);
 
         lbFrom.setFont(defaultFontSize5Bold);
         lbFrom.setSize(dim);
@@ -209,25 +240,25 @@ public class MainFrame extends javax.swing.JFrame {
         tfFrom = new JTextField();
         tfFrom.setFont(defaultFontSize5);
         tfFrom.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        tfFrom.setToolTipText("From");
+        tfFrom.setToolTipText("Departure Airport");
         topPanel.add(tfFrom);
 
         tfTo = new JTextField();
         tfTo.setFont(defaultFontSize5);
         tfTo.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        tfTo.setToolTipText("To");
+        tfTo.setToolTipText("Arrival Airport");
         topPanel.add(tfTo);
 
         tfGoing = new JTextField();
         tfGoing.setFont(defaultFontSize5);
         tfGoing.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        tfGoing.setToolTipText("Going");
+        tfGoing.setToolTipText("Departure Date: yyyy-MM-dd");
         topPanel.add(tfGoing);
 
         tfReturn = new JTextField();
         tfReturn.setFont(defaultFontSize5);
         tfReturn.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        tfReturn.setToolTipText("Return");
+        tfReturn.setToolTipText("Return Date: yyyy-MM-dd");
         topPanel.add(tfReturn);
 
         cbPassenger = new JComboBox<String>();
@@ -236,7 +267,7 @@ public class MainFrame extends javax.swing.JFrame {
         for (int i = 1; i <= 10; i++) {
             cbPassenger.addItem(i);
         }
-        cbPassenger.setToolTipText("Passenger");
+        cbPassenger.setToolTipText("Passengers");
         topPanel.add(cbPassenger);
 
         cbType = new JComboBox();
@@ -289,7 +320,7 @@ public class MainFrame extends javax.swing.JFrame {
                     c.weightx = 1;
                     c.fill = GridBagConstraints.BOTH;
                     homePanel.add(bottomPanel, c);
-                    
+
                     MainFrame.this.revalidate();
                     MainFrame.this.repaint();
                 }
@@ -312,6 +343,8 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         btnSearch.setToolTipText("Search");
+        Image searchImg = FlightListElementPanel.rescaleImage(FlightListElementPanel.createImageWithURL("https://cdn-icons-png.flaticon.com/512/751/751381.png"), 25, 25);
+        btnSearch.setIcon(new ImageIcon(searchImg));
         topPanel.add(btnSearch);
 
         return topPanel;
@@ -379,11 +412,11 @@ public class MainFrame extends javax.swing.JFrame {
         // panels matching the number of flights returned
         ArrayList<JPanel> tmp = new ArrayList<>();
 
-        Response r = parsearJSON(leerJSON(rutaCache));
+        Response r = parsearJSON(leerJSON(pathCache));
 
-        ArrayList<FlightDetails> flightDetails = getFrontEndDetails(r.getBest_flights(), r.getOther_flights());
+        flights = getFrontEndDetails(r.getBest_flights(), r.getOther_flights());
 
-        for (FlightDetails f : flightDetails) {
+        for (FlightDetails f : flights) {
             tmp.add(new FlightListElementPanel(this, homePanel, f));
         }
 
@@ -395,12 +428,12 @@ public class MainFrame extends javax.swing.JFrame {
         // panels matching the number of flights returned
         ArrayList<JPanel> tmp = new ArrayList<>();
 
-        peticionAPI(from, to, going, returnal, "EUR", type, passengers);
-        Response r = parsearJSON(leerJSON(rutaExample));
+        peticionAPI(from, to, going, returnal, "EUR", type, passengers, pathExample);
+        Response r = parsearJSON(leerJSON(pathExample));
 
-        ArrayList<FlightDetails> flightDetails = getFrontEndDetails(r.getBest_flights(), r.getOther_flights());
+        flights = getFrontEndDetails(r.getBest_flights(), r.getOther_flights());
 
-        for (FlightDetails f : flightDetails) {
+        for (FlightDetails f : flights) {
             tmp.add(new FlightListElementPanel(this, homePanel, f));
         }
 
@@ -417,7 +450,7 @@ public class MainFrame extends javax.swing.JFrame {
         return homePanel;
     }
 
-    private void peticionAPI(String departureId, String arrivalId, String departureDate, String returnDate, String currency, String type, String passengers) {
+    private void peticionAPI(String departureId, String arrivalId, String departureDate, String returnDate, String currency, String type, String passengers, String savePath) {
         if (type.equalsIgnoreCase("Round Trip")) {
             type = "1";
         } else {
@@ -459,16 +492,16 @@ public class MainFrame extends javax.swing.JFrame {
                 result += output;
             }
             System.out.println(result);
-            guardarJSON(result);
+            guardarJSON(result, savePath);
             conn.disconnect();
         } catch (Exception e) {
             System.out.println("Exception in NetClientGet:- " + e);
         }
     }
 
-    private void guardarJSON(String data) {
+    private void guardarJSON(String data, String path) {
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(rutaExample));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(path));
             writer.write(data);
             writer.close();
         } catch (IOException e) {
@@ -481,9 +514,9 @@ public class MainFrame extends javax.swing.JFrame {
         return gson.fromJson(json, Response.class);
     }
 
-    private String leerJSON(String ruta) {
+    private String leerJSON(String path) {
         try {
-            BufferedReader reader = new BufferedReader(new FileReader(ruta));
+            BufferedReader reader = new BufferedReader(new FileReader(path));
             String line;
             String result = "";
             while ((line = reader.readLine()) != null) {

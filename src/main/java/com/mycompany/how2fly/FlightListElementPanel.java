@@ -4,6 +4,7 @@
  */
 package com.mycompany.how2fly;
 
+import com.mycompany.how2fly.pojo.Flight;
 import com.mycompany.how2fly.pojo.frontend.FlightDetails;
 import java.awt.Color;
 import java.awt.GridBagConstraints;
@@ -62,6 +63,31 @@ public class FlightListElementPanel extends javax.swing.JPanel {
         lbPrice.setFont(MainFrame.defaultFontSize2);
         JLabel lbAirline = new JLabel("Airline");
         lbAirline.setFont(MainFrame.defaultFontSize2);
+
+        JLabel lbOvernight = new JLabel();
+        lbOvernight.setFont(MainFrame.defaultFontSize2);
+        lbOvernight.setVisible(false);
+        for (Flight f : flightDetails.getFlights()) {
+            if (f.isOvernight()) {
+                lbOvernight.setVisible(true);
+            }
+        }
+        Image overnightImg = rescaleImage(createImageWithURL("https://cdn-icons-png.flaticon.com/512/581/581601.png"), 25, 25);
+        lbOvernight.setIcon(new ImageIcon(overnightImg));
+        lbOvernight.setToolTipText("This flight is overnight");
+
+        JLabel lbDelayed = new JLabel();
+        lbDelayed.setFont(MainFrame.defaultFontSize2);
+        lbDelayed.setVisible(false);
+        for (Flight f : flightDetails.getFlights()) {
+            if (f.isOften_delayed_by_over_30_min()) {
+                lbDelayed.setVisible(true);
+            }
+        }
+        Image delayedImg = rescaleImage(createImageWithURL("https://cdn-icons-png.flaticon.com/512/2972/2972543.png"), 25, 25);
+        lbDelayed.setIcon(new ImageIcon(delayedImg));
+        lbDelayed.setToolTipText("This flight is often delayed");
+
         JPanel infoPanel = new JPanel();
         infoPanel.setBackground(Color.MAGENTA);
 
@@ -96,6 +122,24 @@ public class FlightListElementPanel extends javax.swing.JPanel {
         constraints.gridheight = 1;
 
         this.add(lbAirline, constraints);
+
+        constraints = new GridBagConstraints();
+        constraints.insets = new Insets(0, 0, 5, 5);
+        constraints.gridx = 10;
+        constraints.gridy = 0;
+        constraints.gridwidth = 1;
+        constraints.gridheight = 1;
+
+        this.add(lbOvernight, constraints);
+
+        constraints = new GridBagConstraints();
+        constraints.insets = new Insets(0, 0, 5, 5);
+        constraints.gridx = 11;
+        constraints.gridy = 0;
+        constraints.gridwidth = 1;
+        constraints.gridheight = 1;
+
+        this.add(lbDelayed, constraints);
     }
 
     private void setupInfoPanelContent(JPanel infoPanel, JLabel lbPrice, JLabel lbAirline) {
@@ -163,20 +207,8 @@ public class FlightListElementPanel extends javax.swing.JPanel {
         int layovers = flightDetails.getLayovers().size();
         lbFrom.setText(flightDetails.getFlights().getFirst().getDeparture_airport().getId());
         lbTo.setText(flightDetails.getFlights().getLast().getArrival_airport().getId());
-        int euros = flightDetails.getPrice() / 100;
-        int cents = flightDetails.getPrice() % 100;
-        String result = "";
-        if (euros != 0) {
-            result += euros;
-        }
-        if (cents != 0) {
-            result += "'";
-            if (cents < 10) {
-                result += "0";
-            }
-            result += cents;
-        }
-        lbPrice.setText(result + "€");
+        int euros = flightDetails.getPrice();
+        lbPrice.setText(euros + "€");
         LocalDateTime goingTime = parseDateTime(flightDetails.getFlights().getFirst().getDeparture_airport().getTime().split(" "));
         LocalDateTime arriveTime = parseDateTime(flightDetails.getFlights().getLast().getArrival_airport().getTime().split(" "));
         long hours = goingTime.until(arriveTime, ChronoUnit.MINUTES) / 60;
@@ -186,12 +218,23 @@ public class FlightListElementPanel extends javax.swing.JPanel {
             duration += hours + "h ";
         }
         if (minutes != 0) {
+            if (minutes < 10) {
+                duration += "0";
+            }
             duration += minutes + "m";
         }
         lbDuration.setText(duration);
         lbLayovers.setText("Layovers: " + layovers);
-        lbGoingTime.setText(""+goingTime.getHour()+":"+goingTime.getMinute());
-        lbArriveTime.setText(""+arriveTime.getHour()+":"+arriveTime.getMinute());
+        String lessThanTenMinutes = "";
+        if (goingTime.getMinute() < 10) {
+            lessThanTenMinutes = "0";
+        }
+        lbGoingTime.setText("" + goingTime.getHour() + ":" +lessThanTenMinutes+ goingTime.getMinute());
+        lessThanTenMinutes = "";
+        if(arriveTime.getMinute()<10){
+            lessThanTenMinutes = "0";
+        }
+        lbArriveTime.setText("" + arriveTime.getHour() + ":" + lessThanTenMinutes + arriveTime.getMinute());
         lbAirline.setText(flightDetails.getFlights().getFirst().getAirline());
 
         Image airlineIcon = createImageWithURL(flightDetails.getFlights().getFirst().getAirline_logo());
@@ -219,6 +262,7 @@ public class FlightListElementPanel extends javax.swing.JPanel {
         int minutes = Integer.parseInt(data[1]);
         return LocalTime.of(hours, minutes);
     }
+
     private LocalDateTime parseDateTime(String[] data) {
         String date = data[0];
         String time = data[1];
