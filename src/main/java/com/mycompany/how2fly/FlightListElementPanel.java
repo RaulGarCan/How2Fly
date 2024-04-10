@@ -60,8 +60,10 @@ public class FlightListElementPanel extends javax.swing.JPanel {
         GridBagConstraints constraints = new GridBagConstraints();
         this.setLayout(mainLayout);
         JLabel lbPrice = new JLabel("100€");
+        lbPrice.setToolTipText("Total Price");
         lbPrice.setFont(MainFrame.defaultFontSize2);
         JLabel lbAirline = new JLabel("Airline");
+        lbAirline.setToolTipText("Airline");
         lbAirline.setFont(MainFrame.defaultFontSize2);
 
         JLabel lbOvernight = new JLabel();
@@ -89,6 +91,7 @@ public class FlightListElementPanel extends javax.swing.JPanel {
         lbDelayed.setToolTipText("This flight is often delayed");
 
         JPanel infoPanel = new JPanel();
+        infoPanel.setToolTipText("Press for Details");
         infoPanel.setBackground(Color.MAGENTA);
 
         sendToDetailsListener(infoPanel);

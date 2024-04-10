@@ -5,9 +5,11 @@
 package com.mycompany.how2fly;
 
 import com.google.gson.Gson;
+import static com.mycompany.how2fly.Main.leerJSON;
 import com.mycompany.how2fly.pojo.BestFlights;
 import com.mycompany.how2fly.pojo.OtherFlights;
 import com.mycompany.how2fly.pojo.Response;
+import com.mycompany.how2fly.pojo.frontend.AirportList;
 import com.mycompany.how2fly.pojo.frontend.FlightDetails;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -56,11 +58,12 @@ public class MainFrame extends javax.swing.JFrame {
     private ArrayList<FlightDetails> flights;
     private ArrayList<FlightDetails> filteredFlights;
     JPanel bottomPanel;
-    private JTextField tfFrom, tfTo, tfGoing, tfReturn;
-    private JComboBox cbPassenger, cbType;
+    private JTextField tfGoing, tfReturn;
+    private JComboBox cbPassenger, cbType, cbFrom, cbTo;
     public static Font defaultFontSize5Bold, defaultFontSize2, defaultFontSize5, defaultFontHeader, defaultFontHeaderBold;
-    private final String pathExample = "./src/main/java/com/mycompany/how2fly/data/example.json";
-    private final String pathCache = "./src/main/java/com/mycompany/how2fly/cache/cache.json";
+    private static final String pathExample = "./src/main/java/com/mycompany/how2fly/data/example.json";
+    private static final String pathCache = "./src/main/java/com/mycompany/how2fly/cache/cache.json";
+    public static final String pathCacheAirport = "./src/main/java/com/mycompany/how2fly/cache/airports.json";
     private JPanel homePanel;
     private final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 
@@ -84,15 +87,32 @@ public class MainFrame extends javax.swing.JFrame {
         this.setExtendedState(MAXIMIZED_BOTH);
     }
 
+    private void fillAirports(JComboBox<String> cb) {
+        Gson gson = new Gson();
+        AirportList[] airports = gson.fromJson(leerJSON(MainFrame.pathCacheAirport), AirportList[].class);
+        for (AirportList a : airports) {
+            cb.addItem(a.getIataCode());
+        }
+    }
+
     private boolean checkFields(JTextField[] tfs) {
         if (!fieldsFilled(tfs)) {
             return false;
         }
-        if (!fieldsFromToDiff(tfFrom, tfTo)) {
+        if (!fieldsFromToDiff(cbFrom, cbTo)) {
             return false;
         }
-        if (!checkDateFormat(tfGoing) || !checkDateFormat(tfReturn)) {
+        if (!checkDateFormat(tfGoing)) {
+            tfGoing.setForeground(Color.red);
             return false;
+        } else {
+            tfGoing.setForeground(Color.black);
+        }
+        if (!checkDateFormat(tfReturn)) {
+            tfReturn.setForeground(Color.red);
+            return false;
+        } else {
+            tfReturn.setForeground(Color.black);
         }
         if (!returnDateHigerOrEqualToGoing(tfGoing, tfReturn)) {
             return false;
@@ -130,8 +150,8 @@ public class MainFrame extends javax.swing.JFrame {
         return true;
     }
 
-    private boolean fieldsFromToDiff(JTextField tfFrom, JTextField tfTo) {
-        return !tfFrom.getText().equals(tfTo.getText());
+    private boolean fieldsFromToDiff(JComboBox cbFrom, JComboBox cbTo) {
+        return !cbFrom.getSelectedItem().toString().equals(cbTo.getSelectedItem().toString());
     }
 
     private boolean returnDateHigerOrEqualToGoing(JTextField tfGoing, JTextField tfReturn) {
@@ -237,17 +257,19 @@ public class MainFrame extends javax.swing.JFrame {
         topPanel.add(new JLabel());
 
         // Bottom Row
-        tfFrom = new JTextField();
-        tfFrom.setFont(defaultFontSize5);
-        tfFrom.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        tfFrom.setToolTipText("Departure Airport");
-        topPanel.add(tfFrom);
+        cbFrom = new JComboBox();
+        fillAirports(cbFrom);
+        cbFrom.setFont(defaultFontSize5);
+        cbFrom.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        cbFrom.setToolTipText("Departure Airport");
+        topPanel.add(cbFrom);
 
-        tfTo = new JTextField();
-        tfTo.setFont(defaultFontSize5);
-        tfTo.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        tfTo.setToolTipText("Arrival Airport");
-        topPanel.add(tfTo);
+        cbTo = new JComboBox();
+        fillAirports(cbTo);
+        cbTo.setFont(defaultFontSize5);
+        cbTo.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        cbTo.setToolTipText("Arrival Airport");
+        topPanel.add(cbTo);
 
         tfGoing = new JTextField();
         tfGoing.setFont(defaultFontSize5);
@@ -267,13 +289,13 @@ public class MainFrame extends javax.swing.JFrame {
         for (int i = 1; i <= 10; i++) {
             cbPassenger.addItem(i);
         }
-        cbPassenger.setToolTipText("Passengers");
+        cbPassenger.setToolTipText("Passengers Number");
         topPanel.add(cbPassenger);
 
         cbType = new JComboBox();
         cbType.setFont(defaultFontSize5);
         cbType.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        cbType.setToolTipText("Type");
+        cbType.setToolTipText("Trip Type");
         cbType.addItem("Round Trip");
         cbType.addItem("One Way");
         cbType.addItemListener(new ItemListener() {
@@ -296,10 +318,10 @@ public class MainFrame extends javax.swing.JFrame {
         btnSearch.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                JTextField[] tfs = {tfFrom, tfTo, tfGoing, tfReturn};
+                JTextField[] tfs = {tfGoing, tfReturn};
                 if (checkFields(tfs)) {
-                    String from = tfFrom.getText();
-                    String to = tfTo.getText();
+                    String from = cbFrom.getSelectedItem().toString();
+                    String to = cbTo.getSelectedItem().toString();
                     String going = tfGoing.getText();
                     String returnal = null;
                     if (tfReturn.isEnabled()) {
@@ -342,7 +364,7 @@ public class MainFrame extends javax.swing.JFrame {
             public void mouseExited(MouseEvent e) {
             }
         });
-        btnSearch.setToolTipText("Search");
+        btnSearch.setToolTipText("Press to Search");
         Image searchImg = FlightListElementPanel.rescaleImage(FlightListElementPanel.createImageWithURL("https://cdn-icons-png.flaticon.com/512/751/751381.png"), 25, 25);
         btnSearch.setIcon(new ImageIcon(searchImg));
         topPanel.add(btnSearch);
@@ -413,6 +435,7 @@ public class MainFrame extends javax.swing.JFrame {
         ArrayList<JPanel> tmp = new ArrayList<>();
 
         Response r = parsearJSON(leerJSON(pathCache));
+        System.out.println(r.getPrice_insights());
 
         flights = getFrontEndDetails(r.getBest_flights(), r.getOther_flights());
 

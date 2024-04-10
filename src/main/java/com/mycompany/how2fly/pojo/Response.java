@@ -7,15 +7,17 @@ public class Response {
     private SearchParameters search_parameters;
     private ArrayList<BestFlights> best_flights;
     private ArrayList<OtherFlights> other_flights;
+    private PriceInsights price_insights;
 
     public Response() {
     }
 
-    public Response(SearchMetadata search_metadata, SearchParameters search_parameters, ArrayList<BestFlights> best_flights, ArrayList<OtherFlights> other_flights) {
+    public Response(SearchMetadata search_metadata, SearchParameters search_parameters, ArrayList<BestFlights> best_flights, ArrayList<OtherFlights> other_flights, PriceInsights price_insights) {
         this.search_metadata = search_metadata;
         this.search_parameters = search_parameters;
         this.best_flights = best_flights;
         this.other_flights = other_flights;
+        this.price_insights = price_insights;
     }
 
     public SearchMetadata getSearch_metadata() {
@@ -50,13 +52,19 @@ public class Response {
         this.other_flights = other_flights;
     }
 
+    public PriceInsights getPrice_insights() {
+        return price_insights;
+    }
+
+    public void setPrice_insights(PriceInsights price_insights) {
+        this.price_insights = price_insights;
+    }
+
     @Override
     public String toString() {
-        return "Response{" +
-                "search_metadata=" + search_metadata +
-                ", search_parameters=" + search_parameters +
-                ", best_flights=" + best_flights +
-                ", other_flights=" + other_flights +
-                '}';
+        return "Response{" + "search_metadata=" + search_metadata + ", search_parameters=" + search_parameters + ", best_flights=" + best_flights + ", other_flights=" + other_flights + ", price_insights=" + price_insights + '}';
     }
+    
+
+    
 }

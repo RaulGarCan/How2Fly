@@ -45,11 +45,11 @@ public class FlightDetailsPanel extends javax.swing.JPanel {
         lbHeader.setFont(MainFrame.defaultFontHeaderBold);
         lbHeader.setText(flightDetails.getFlights().getFirst().getDeparture_airport().getId() + " - " + flightDetails.getFlights().getLast().getArrival_airport().getId());
         lbHeader.setOpaque(true);
-        lbHeader.setBackground(Color.green);
         JPanel detailsPanel = new JPanel();
         detailsPanel.setBackground(Color.red);
         JButton btnBack = new JButton("Back");
         btnBack.setFont(MainFrame.defaultFontHeader);
+        btnBack.setToolTipText("Go Back");
         Image backImg = FlightListElementPanel.rescaleImage(FlightListElementPanel.createImageWithURL("https://cdn-icons-png.flaticon.com/512/507/507257.png"), 50, 50);
         btnBack.setIcon(new ImageIcon(backImg));
         setupDetailsPanel(detailsPanel);
@@ -79,6 +79,7 @@ public class FlightDetailsPanel extends javax.swing.JPanel {
 
         JButton btnBook = new JButton("Book Now!");
         btnBook.setFont(MainFrame.defaultFontHeader);
+        btnBook.setToolTipText("Go Booking");
         Image bookImg = FlightListElementPanel.rescaleImage(FlightListElementPanel.createImageWithURL("https://cdn-icons-png.flaticon.com/512/7126/7126527.png"), 50, 50);
         btnBook.setIcon(new ImageIcon(bookImg));
 

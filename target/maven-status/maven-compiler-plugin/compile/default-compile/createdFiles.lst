@@ -4,8 +4,10 @@ com\mycompany\how2fly\pojo\SearchParameters.class
 com\mycompany\how2fly\pojo\Response.class
 com\mycompany\how2fly\pojo\Airport.class
 com\mycompany\how2fly\pojo\Flight.class
+com\mycompany\how2fly\pojo\filters\FlightFilters.class
 com\mycompany\how2fly\FlightDetailsPanel$2.class
 com\mycompany\how2fly\FlightDetailsPanel.class
+com\mycompany\how2fly\pojo\frontend\AirportList.class
 com\mycompany\how2fly\FlightListElementPanel$1.class
 com\mycompany\how2fly\MainFrame.class
 com\mycompany\how2fly\FlightDetailsPanel$1.class
@@ -18,3 +20,4 @@ com\mycompany\how2fly\MainFrame$3.class
 com\mycompany\how2fly\MainFrame$2.class
 com\mycompany\how2fly\pojo\frontend\FlightDetails.class
 com\mycompany\how2fly\FlightListElementPanel.class
+com\mycompany\how2fly\pojo\PriceInsights.class
