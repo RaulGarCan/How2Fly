@@ -70,7 +70,7 @@ public class Main {
                 result += output;
             }
             System.out.println(result);
-            guardarJSON(result, MainFrame.pathCacheAirport);
+            guardarJSON(result, MainFrame.PATHCACHEAIRPORT);
             conn.disconnect();
         } catch (Exception e) {
             System.out.println("Exception in NetClientGet:- " + e);

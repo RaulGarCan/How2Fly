@@ -65,7 +65,7 @@ public class FlightListElementPanel extends javax.swing.JPanel {
         JLabel lbAirline = new JLabel("Airline");
         lbAirline.setToolTipText("Airline");
         lbAirline.setFont(MainFrame.defaultFontSize2);
-
+        
         JLabel lbOvernight = new JLabel();
         lbOvernight.setFont(MainFrame.defaultFontSize2);
         lbOvernight.setVisible(false);
@@ -232,9 +232,9 @@ public class FlightListElementPanel extends javax.swing.JPanel {
         if (goingTime.getMinute() < 10) {
             lessThanTenMinutes = "0";
         }
-        lbGoingTime.setText("" + goingTime.getHour() + ":" +lessThanTenMinutes+ goingTime.getMinute());
+        lbGoingTime.setText("" + goingTime.getHour() + ":" + lessThanTenMinutes + goingTime.getMinute());
         lessThanTenMinutes = "";
-        if(arriveTime.getMinute()<10){
+        if (arriveTime.getMinute() < 10) {
             lessThanTenMinutes = "0";
         }
         lbArriveTime.setText("" + arriveTime.getHour() + ":" + lessThanTenMinutes + arriveTime.getMinute());
