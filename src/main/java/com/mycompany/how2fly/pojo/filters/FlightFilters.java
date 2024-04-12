@@ -14,14 +14,14 @@ public enum FlightFilters {
     LAYOVER3 ("3 Layovers"),
     LAYOVERS ("Rest of Layovers"),
     
-    TIMEEARLY ("Early Time"),
-    TIMEMID ("Mid Time"),
-    TIMELATE ("Late Time"),
+    SHORTDURATION ("Short Duration"),
+    MIDDURATION ("Mid Duration"),
+    LONGDURATION ("Long Duration"),
     
     PRICERANGE ("Price Range"),
     
-    OVERNIGHT ("Overnight"),
-    DELAYED ("Often Delayed");
+    OVERNIGHT ("Not Overnight"),
+    DELAYED ("Not Delayed");
     private String displayedName;
 
     private FlightFilters(String displayedName) {

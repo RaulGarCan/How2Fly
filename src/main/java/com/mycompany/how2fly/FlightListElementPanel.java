@@ -7,6 +7,7 @@ package com.mycompany.how2fly;
 import com.mycompany.how2fly.pojo.Flight;
 import com.mycompany.how2fly.pojo.frontend.FlightDetails;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Image;
@@ -53,6 +54,10 @@ public class FlightListElementPanel extends javax.swing.JPanel {
         start();
     }
 
+    public FlightDetails getFlightDetails() {
+        return flightDetails;
+    }
+    
     private void start() {
         this.setBorder(BorderFactory.createLineBorder(Color.black));
         this.setBackground(Color.yellow);
@@ -266,7 +271,7 @@ public class FlightListElementPanel extends javax.swing.JPanel {
         return LocalTime.of(hours, minutes);
     }
 
-    private LocalDateTime parseDateTime(String[] data) {
+    public static LocalDateTime parseDateTime(String[] data) {
         String date = data[0];
         String time = data[1];
         String[] dataTime = time.split(":");

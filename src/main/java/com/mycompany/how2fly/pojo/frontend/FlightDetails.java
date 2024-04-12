@@ -6,6 +6,7 @@ import com.mycompany.how2fly.pojo.Layover;
 import com.mycompany.how2fly.pojo.OtherFlights;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class FlightDetails {
 
@@ -84,4 +85,41 @@ public class FlightDetails {
                 + ", booking_token='" + booking_token + '\''
                 + '}';
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final FlightDetails other = (FlightDetails) obj;
+        if (this.total_duration != other.total_duration) {
+            return false;
+        }
+        if (this.price != other.price) {
+            return false;
+        }
+        if (this.isBestFlight != other.isBestFlight) {
+            return false;
+        }
+        if (!Objects.equals(this.airline_logo, other.airline_logo)) {
+            return false;
+        }
+        if (!Objects.equals(this.departure_token, other.departure_token)) {
+            return false;
+        }
+        if (!Objects.equals(this.booking_token, other.booking_token)) {
+            return false;
+        }
+        if (!Objects.equals(this.flights, other.flights)) {
+            return false;
+        }
+        return Objects.equals(this.layovers, other.layovers);
+    }
+    
 }

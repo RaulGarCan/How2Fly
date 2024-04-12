@@ -19,6 +19,7 @@ com\mycompany\how2fly\Main.class
 com\mycompany\how2fly\MainFrame$2.class
 com\mycompany\how2fly\pojo\frontend\FlightDetails.class
 com\mycompany\how2fly\FlightListElementPanel.class
+com\mycompany\how2fly\MainFrame$14.class
 com\mycompany\how2fly\MainFrame$7.class
 com\mycompany\how2fly\pojo\Response.class
 com\mycompany\how2fly\MainFrame$13.class
@@ -28,6 +29,7 @@ com\mycompany\how2fly\MainFrame$9.class
 com\mycompany\how2fly\FlightDetailsPanel$1.class
 com\mycompany\how2fly\pojo\SearchMetadata.class
 com\mycompany\how2fly\pojo\CarbonEmission.class
+com\mycompany\how2fly\MainFrame$15.class
 com\mycompany\how2fly\MainFrame$3.class
 com\mycompany\how2fly\MainFrame$10.class
 com\mycompany\how2fly\pojo\PriceInsights.class
