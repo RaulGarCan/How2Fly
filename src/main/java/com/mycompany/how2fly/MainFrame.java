@@ -56,6 +56,8 @@ import java.awt.event.ActionListener;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
+import javax.swing.ButtonGroup;
+import javax.swing.JRadioButton;
 import javax.swing.JSlider;
 import javax.swing.UIDefaults;
 import javax.swing.UIManager;
@@ -68,6 +70,8 @@ import javax.swing.event.ChangeListener;
  */
 public class MainFrame extends javax.swing.JFrame {
 
+    private ButtonGroup bgDayTime, bgLayovers;
+    private JCheckBox cbApplyPrice;
     private int priceSelected;
     private JPanel filtersPanel, scrollInsidePanel;
     private ArrayList<FlightListElementPanel> scrollPanelList;
@@ -105,6 +109,10 @@ public class MainFrame extends javax.swing.JFrame {
 
         slPriceRange = new JSlider();
         lbPriceSelected = new JLabel("0");
+        filteredFlights = new ArrayList<>();
+
+        bgDayTime = new ButtonGroup();
+        bgLayovers = new ButtonGroup();
 
         createHomePanel();
 
@@ -113,6 +121,14 @@ public class MainFrame extends javax.swing.JFrame {
         this.add(homePanel);
 
         this.setExtendedState(MAXIMIZED_BOTH);
+    }
+
+    private void updateCache() {
+        LocalDateTime dateTime = FlightListElementPanel.parseDateTime(flights.getFirst().getFlights().getFirst().getDeparture_airport().getTime().split(" "));
+        LocalDate now = LocalDate.now();
+        if (!now.getMonth().equals(dateTime.getMonth())) {
+            peticionAPI("CDG", "AUS", "", "", "EUR", PATHCACHE, priceLevel, PATHCACHE);
+        }
     }
 
     private void fillAirports(JComboBox<String> cb) {
@@ -245,6 +261,10 @@ public class MainFrame extends javax.swing.JFrame {
         constraints.weightx = 1;
         constraints.fill = GridBagConstraints.BOTH;
         homePanel.add(setupBottomPanel(getScrollPanelElements(), false), constraints);
+
+        for (FlightDetails f : flights) {
+            filteredFlights.add(f);
+        }
 
         constraints = new GridBagConstraints();
         constraints.insets = new Insets(10, 10, 10, 0);
@@ -573,6 +593,7 @@ public class MainFrame extends javax.swing.JFrame {
         rightCol.setLayout(new GridLayout(0, 1));
         rightCol.setBackground(Color.cyan);
 
+        ArrayList<JRadioButton> rbs = new ArrayList<>();
         ArrayList<JCheckBox> cbs = new ArrayList<>();
 
         int counter = 0;
@@ -580,10 +601,11 @@ public class MainFrame extends javax.swing.JFrame {
         lbLayover.setFont(defaultFontSize5Bold);
         leftCol.add(lbLayover);
         for (int i = counter; i < 4; i++) {
-            JCheckBox cbLayover = new JCheckBox(filters.get(i).getDisplayedName());
-            cbLayover.setFont(defaultFontSize2);
-            cbs.add(cbLayover);
-            leftCol.add(cbLayover);
+            JRadioButton rbLayover = new JRadioButton(filters.get(i).getDisplayedName());
+            rbLayover.setFont(defaultFontSize2);
+            rbs.add(rbLayover);
+            bgLayovers.add(rbLayover);
+            leftCol.add(rbLayover);
         }
 
         counter = 4;
@@ -591,10 +613,11 @@ public class MainFrame extends javax.swing.JFrame {
         lbDayTime.setFont(defaultFontSize5Bold);
         leftCol.add(lbDayTime);
         for (int i = counter; i < 7; i++) {
-            JCheckBox cbDayTime = new JCheckBox(filters.get(i).getDisplayedName());
-            cbDayTime.setFont(defaultFontSize2);
-            cbs.add(cbDayTime);
-            leftCol.add(cbDayTime);
+            JRadioButton rbDayTime = new JRadioButton(filters.get(i).getDisplayedName());
+            rbDayTime.setFont(defaultFontSize2);
+            rbs.add(rbDayTime);
+            leftCol.add(rbDayTime);
+            bgDayTime.add(rbDayTime);
         }
 
         counter = 7;
@@ -619,6 +642,8 @@ public class MainFrame extends javax.swing.JFrame {
             public void stateChanged(ChangeEvent e) {
                 lbPriceSelected.setText("Up to " + slPriceRange.getValue());
                 priceSelected = slPriceRange.getValue();
+                cbApplyPrice.setSelected(false);
+                activeFilters.remove(FlightFilters.PRICERANGE);
             }
         });
 
@@ -637,16 +662,20 @@ public class MainFrame extends javax.swing.JFrame {
         c.gridy = 0;
         c.weightx = 0.15;
 
-        JButton btnApplyPrice = new JButton("Apply");
-        btnApplyPrice.addActionListener(new ActionListener() {
+        cbApplyPrice = new JCheckBox("Apply");
+        cbApplyPrice.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                if (cbApplyPrice.isSelected()) {
+                    activeFilters.add(FlightFilters.PRICERANGE);
+                } else {
+                    activeFilters.remove(FlightFilters.PRICERANGE);
+                }
                 loadFilters();
-                activeFilters.remove(FlightFilters.PRICERANGE);
-                activeFilters.add(FlightFilters.PRICERANGE);
+
             }
         });
-        panelSlider.add(btnApplyPrice, c);
+        panelSlider.add(cbApplyPrice, c);
 
         leftCol.add(panelSlider);
 
@@ -662,24 +691,109 @@ public class MainFrame extends javax.swing.JFrame {
             cbs.add(cbOvernightAndDelayed);
             rightCol.add(cbOvernightAndDelayed);
         }
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < 7; i++) {
             rightCol.add(new JLabel());
         }
+        filtersListeners(rbs, cbs);
 
-        filtersListeners(cbs);
+        JButton btnClearFilters = new JButton("Clear Filters");
+        btnClearFilters.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                bgDayTime.clearSelection();
+                bgLayovers.clearSelection();
+
+                activeFilters.clear();
+                loadFilters();
+                for (JCheckBox cb : cbs) {
+                    cb.setSelected(false);
+                }
+                cbApplyPrice.setSelected(false);
+            }
+        });
+
+        rightCol.add(btnClearFilters);
 
         filtersPanel.add(leftCol);
         filtersPanel.add(rightCol);
     }
 
-    private void filtersListeners(ArrayList<JCheckBox> cbs) {
+    private void filtersListeners(ArrayList<JRadioButton> rbs, ArrayList<JCheckBox> cbs) {
+        rbs.get(0).addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                activeFilters.remove(FlightFilters.LAYOVER2);
+                activeFilters.remove(FlightFilters.LAYOVER3);
+                activeFilters.remove(FlightFilters.LAYOVERS);
+                activeFilters.add(FlightFilters.LAYOVER1);
+                loadFilters();
+            }
+        });
+        rbs.get(1).addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                activeFilters.remove(FlightFilters.LAYOVER1);
+                activeFilters.remove(FlightFilters.LAYOVER3);
+                activeFilters.remove(FlightFilters.LAYOVERS);
+                activeFilters.add(FlightFilters.LAYOVER2);
+                loadFilters();
+            }
+        });
+        rbs.get(2).addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                activeFilters.remove(FlightFilters.LAYOVER1);
+                activeFilters.remove(FlightFilters.LAYOVER2);
+                activeFilters.remove(FlightFilters.LAYOVERS);
+                activeFilters.add(FlightFilters.LAYOVER3);
+                loadFilters();
+            }
+        });
+        rbs.get(3).addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                activeFilters.remove(FlightFilters.LAYOVER1);
+                activeFilters.remove(FlightFilters.LAYOVER2);
+                activeFilters.remove(FlightFilters.LAYOVER3);
+                activeFilters.add(FlightFilters.LAYOVERS);
+                loadFilters();
+            }
+        });
+
+        rbs.get(4).addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                activeFilters.remove(FlightFilters.MIDDURATION);
+                activeFilters.remove(FlightFilters.LONGDURATION);
+                activeFilters.add(FlightFilters.SHORTDURATION);
+                loadFilters();
+            }
+        });
+        rbs.get(5).addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                activeFilters.remove(FlightFilters.SHORTDURATION);
+                activeFilters.remove(FlightFilters.LONGDURATION);
+                activeFilters.add(FlightFilters.MIDDURATION);
+                loadFilters();
+            }
+        });
+        rbs.get(6).addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                activeFilters.remove(FlightFilters.SHORTDURATION);
+                activeFilters.remove(FlightFilters.MIDDURATION);
+                activeFilters.add(FlightFilters.LONGDURATION);
+                loadFilters();
+            }
+        });
         cbs.get(0).addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (cbs.get(0).isSelected()) {
-                    activeFilters.add(FlightFilters.LAYOVER1);
+                    activeFilters.add(FlightFilters.OVERNIGHT);
                 } else {
-                    activeFilters.remove(FlightFilters.LAYOVER1);
+                    activeFilters.remove(FlightFilters.OVERNIGHT);
                 }
                 loadFilters();
             }
@@ -688,84 +802,6 @@ public class MainFrame extends javax.swing.JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (cbs.get(1).isSelected()) {
-                    activeFilters.add(FlightFilters.LAYOVER2);
-                } else {
-                    activeFilters.remove(FlightFilters.LAYOVER2);
-                }
-                loadFilters();
-            }
-        });
-        cbs.get(2).addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (cbs.get(2).isSelected()) {
-                    activeFilters.add(FlightFilters.LAYOVER3);
-                } else {
-                    activeFilters.remove(FlightFilters.LAYOVER3);
-                }
-                loadFilters();
-            }
-        });
-        cbs.get(3).addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (cbs.get(3).isSelected()) {
-                    activeFilters.add(FlightFilters.LAYOVERS);
-                } else {
-                    activeFilters.remove(FlightFilters.LAYOVERS);
-                }
-                loadFilters();
-            }
-        });
-
-        cbs.get(4).addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (cbs.get(4).isSelected()) {
-                    activeFilters.add(FlightFilters.SHORTDURATION);
-                } else {
-                    activeFilters.remove(FlightFilters.SHORTDURATION);
-                }
-                loadFilters();
-            }
-        });
-        cbs.get(5).addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (cbs.get(5).isSelected()) {
-                    activeFilters.add(FlightFilters.MIDDURATION);
-                } else {
-                    activeFilters.remove(FlightFilters.MIDDURATION);
-                }
-                loadFilters();
-            }
-        });
-        cbs.get(6).addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (cbs.get(6).isSelected()) {
-                    activeFilters.add(FlightFilters.LONGDURATION);
-                } else {
-                    activeFilters.remove(FlightFilters.LONGDURATION);
-                }
-                loadFilters();
-            }
-        });
-        cbs.get(7).addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (cbs.get(7).isSelected()) {
-                    activeFilters.add(FlightFilters.OVERNIGHT);
-                } else {
-                    activeFilters.remove(FlightFilters.OVERNIGHT);
-                }
-                loadFilters();
-            }
-        });
-        cbs.get(8).addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (cbs.get(8).isSelected()) {
                     activeFilters.add(FlightFilters.DELAYED);
                 } else {
                     activeFilters.remove(FlightFilters.DELAYED);
@@ -777,9 +813,17 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void loadFilters() {
         filteredFlights = new ArrayList<>();
+        for (FlightDetails f : flights) {
+            filteredFlights.add(f);
+        }
+        System.out.println("Active Filters: " + activeFilters);
         if (!activeFilters.isEmpty()) {
             for (FlightFilters f : activeFilters) {
-                filteredFlights.addAll(getFlightsWithFilter(f));
+                ArrayList<FlightDetails> tmp = getFlightsWithFilter(f);
+                System.out.println("tmp: " + tmp);
+                filteredFlights.clear();
+                filteredFlights.addAll(tmp);
+                System.out.println("Filtered: " + filteredFlights);
             }
             System.out.println(activeFilters);
             // get the filtered flights sublist
@@ -821,13 +865,13 @@ public class MainFrame extends javax.swing.JFrame {
     private ArrayList<FlightDetails> filterLayover(int nLayover) {
         ArrayList<FlightDetails> result = new ArrayList<>();
         if (nLayover != 4) {
-            for (FlightDetails f : flights) {
+            for (FlightDetails f : filteredFlights) {
                 if (f.getLayovers().size() == nLayover) {
                     result.add(f);
                 }
             }
         } else {
-            for (FlightDetails f : flights) {
+            for (FlightDetails f : filteredFlights) {
                 if (f.getLayovers().size() >= nLayover) {
                     result.add(f);
                 }
@@ -843,7 +887,7 @@ public class MainFrame extends javax.swing.JFrame {
         ArrayList<FlightDetails> result = new ArrayList<>();
         switch (duration) {
             case -1:
-                for (FlightDetails f : flights) {
+                for (FlightDetails f : filteredFlights) {
                     LocalDateTime time1 = FlightListElementPanel.parseDateTime(f.getFlights().getFirst().getDeparture_airport().getTime().split(" "));
                     LocalDateTime time2 = FlightListElementPanel.parseDateTime(f.getFlights().getLast().getArrival_airport().getTime().split(" "));
                     long flightDuration = Math.abs(time1.until(time2, ChronoUnit.HOURS));
@@ -853,7 +897,7 @@ public class MainFrame extends javax.swing.JFrame {
                 }
                 return result;
             case 0:
-                for (FlightDetails f : flights) {
+                for (FlightDetails f : filteredFlights) {
                     LocalDateTime time1 = FlightListElementPanel.parseDateTime(f.getFlights().getFirst().getDeparture_airport().getTime().split(" "));
                     LocalDateTime time2 = FlightListElementPanel.parseDateTime(f.getFlights().getLast().getArrival_airport().getTime().split(" "));
                     long flightDuration = Math.abs(time1.until(time2, ChronoUnit.HOURS));
@@ -863,7 +907,7 @@ public class MainFrame extends javax.swing.JFrame {
                 }
                 return result;
             case 1:
-                for (FlightDetails f : flights) {
+                for (FlightDetails f : filteredFlights) {
                     LocalDateTime time1 = FlightListElementPanel.parseDateTime(f.getFlights().getFirst().getDeparture_airport().getTime().split(" "));
                     LocalDateTime time2 = FlightListElementPanel.parseDateTime(f.getFlights().getLast().getArrival_airport().getTime().split(" "));
                     long flightDuration = Math.abs(time1.until(time2, ChronoUnit.HOURS));
@@ -881,7 +925,7 @@ public class MainFrame extends javax.swing.JFrame {
     private ArrayList<FlightDetails> filterOvernight() {
         ArrayList<FlightDetails> result = new ArrayList<>();
         boolean isOvernight = false;
-        for (FlightDetails f : flights) {
+        for (FlightDetails f : filteredFlights) {
             for (Flight flight : f.getFlights()) {
                 if (flight.isOvernight()) {
                     isOvernight = true;
@@ -898,7 +942,7 @@ public class MainFrame extends javax.swing.JFrame {
     private ArrayList<FlightDetails> filterDelayed() {
         ArrayList<FlightDetails> result = new ArrayList<>();
         boolean isDelayed = false;
-        for (FlightDetails f : flights) {
+        for (FlightDetails f : filteredFlights) {
             for (Flight flight : f.getFlights()) {
                 if (flight.isOften_delayed_by_over_30_min()) {
                     isDelayed = true;
@@ -914,11 +958,15 @@ public class MainFrame extends javax.swing.JFrame {
 
     private ArrayList<FlightDetails> filterPriceRange() {
         ArrayList<FlightDetails> result = new ArrayList<>();
-        for (FlightDetails f : flights) {
+        System.out.println("Lowest Price: " + priceInsights.getLowest_price());
+        System.out.println("Price Selected: " + priceSelected);
+        for (FlightDetails f : filteredFlights) {
             if (f.getPrice() >= priceInsights.getLowest_price() && f.getPrice() <= priceSelected) {
+                System.out.println(f.getPrice());
                 result.add(f);
             }
         }
+        System.out.println(result);
         return result;
     }
 
@@ -934,6 +982,7 @@ public class MainFrame extends javax.swing.JFrame {
                 max = f.getPrice();
             }
         }
+        priceSelected = priceInsights.getLowest_price();
         lbPriceSelected.setText("Up to " + priceInsights.getLowest_price());
         slPriceRange.setMinimum(priceInsights.getLowest_price());
         slPriceRange.setMaximum(max);
