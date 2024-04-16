@@ -51,6 +51,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 import com.mycompany.how2fly.pojo.filters.FlightFilters;
+import java.awt.CardLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.time.LocalDateTime;
@@ -70,25 +71,28 @@ import javax.swing.event.ChangeListener;
  */
 public class MainFrame extends javax.swing.JFrame {
 
+    private ArrayList<JCheckBox> cbs;
+    private CardLayout scrollLayout;
+    private JButton btnSwapFlightsTab;
     private ButtonGroup bgDayTime, bgLayovers;
     private JCheckBox cbApplyPrice;
     private int priceSelected;
-    private JPanel filtersPanel, scrollInsidePanel;
-    private ArrayList<FlightListElementPanel> scrollPanelList;
-    private JScrollPane scrollPanel;
+    private JPanel filtersPanel;
+    private ArrayList<FlightListElementPanel> scrollPanelListGoing, scrollPanelListReturn;
+    private JScrollPane scrollPanelGoing, scrollPanelReturn;
     private JPanel bottomPanel;
     private ArrayList<FlightFilters> activeFilters;
     private int maxPrice;
     private JSlider slPriceRange;
     private PriceInsights priceInsights;
-    private static String priceLevel;
+    private static String priceLevelGoing, priceLevelReturn;
     private JLabel lbPriceLevel, lbPriceSelected;
-    private ArrayList<FlightDetails> flights;
+    private ArrayList<FlightDetails> flights, flightsReturn;
     private ArrayList<FlightDetails> filteredFlights;
     private JTextField tfGoing, tfReturn;
     private JComboBox cbPassenger, cbType, cbFrom, cbTo;
     public static Font defaultFontSize5Bold, defaultFontSize2, defaultFontSize5, defaultFontHeader, defaultFontHeaderBold;
-    public static final String PATHEXAMPLE = "./src/main/java/com/mycompany/how2fly/data/example.json";
+    public static final String PATHEXAMPLE = "./src/main/java/com/mycompany/how2fly/data";
     public static final String PATHCACHE = "./src/main/java/com/mycompany/how2fly/cache/cache.json";
     public static final String PATHCACHEAIRPORT = "./src/main/java/com/mycompany/how2fly/cache/airports.json";
     private JPanel homePanel;
@@ -103,6 +107,48 @@ public class MainFrame extends javax.swing.JFrame {
     }
 
     private void start() {
+        btnSwapFlightsTab = new JButton();
+        btnSwapFlightsTab.setEnabled(false);
+
+        btnSwapFlightsTab.setText("Return Flights");
+        btnSwapFlightsTab.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                bgDayTime.clearSelection();
+                bgLayovers.clearSelection();
+
+                activeFilters.clear();
+                loadFilters();
+                for (JCheckBox cb : cbs) {
+                    cb.setSelected(false);
+                }
+                cbApplyPrice.setSelected(false);
+                if (scrollPanelGoing.isVisible()) {
+                    System.out.println("Going to Return");
+                    scrollPanelGoing.setVisible(false);
+                    scrollPanelReturn.setVisible(true);
+                    btnSwapFlightsTab.setText("Going Flights");
+                    lbPriceLevel.setText("Price Level: " + priceLevelReturn);
+
+                } else {
+                    System.out.println("Return to Going");
+                    scrollPanelReturn.setVisible(false);
+                    scrollPanelGoing.setVisible(true);
+                    btnSwapFlightsTab.setText("Return Flights");
+                    lbPriceLevel.setText("Price Level: " + priceLevelGoing);
+                }
+
+                ArrayList<FlightDetails> tmp = flights;
+                flights = flightsReturn;
+                flightsReturn = tmp;
+
+                getPriceRange();
+
+                MainFrame.this.revalidate();
+                MainFrame.this.repaint();
+            }
+        });
+
         activeFilters = new ArrayList<>();
 
         this.setBounds(0, 0, 500, 500);
@@ -160,10 +206,10 @@ public class MainFrame extends javax.swing.JFrame {
             System.out.println(returnDate);
 
             peticionAPI("CDG", "AUS", departureDate, returnDate, "EUR", "One Way", "1", PATHCACHE);
-            
+
             homePanel.remove(bottomPanel);
-            ArrayList<FlightListElementPanel> scrollElements = getScrollPanelElements();
-            bottomPanel = MainFrame.this.setupBottomPanel(scrollElements, false);
+            ArrayList<FlightListElementPanel> scrollElements = getScrollPanelElementsCache();
+            bottomPanel = MainFrame.this.setupBottomPanel(scrollElements, new ArrayList<>(), false);
             GridBagConstraints c = new GridBagConstraints();
             c.gridx = 0;
             c.gridy = 2;
@@ -308,7 +354,7 @@ public class MainFrame extends javax.swing.JFrame {
         constraints.weighty = 1;
         constraints.weightx = 1;
         constraints.fill = GridBagConstraints.BOTH;
-        homePanel.add(setupBottomPanel(getScrollPanelElements(), false), constraints);
+        homePanel.add(setupBottomPanel(getScrollPanelElementsCache(), new ArrayList<>(), false), constraints);
 
         for (FlightDetails f : flights) {
             filteredFlights.add(f);
@@ -450,8 +496,9 @@ public class MainFrame extends javax.swing.JFrame {
                     String type = cbType.getSelectedItem().toString();
 
                     homePanel.remove(bottomPanel);
-                    ArrayList<FlightListElementPanel> scrollElements = getScrollPanelElements(from, to, going, returnal, type, passengers);
-                    bottomPanel = MainFrame.this.setupBottomPanel(scrollElements, false);
+                    ArrayList<FlightListElementPanel> scrollElementsGoing = getScrollPanelElementsGoing(from, to, going, returnal, type, passengers);
+                    ArrayList<FlightListElementPanel> scrollElementsReturn = getScrollPanelElementsReturn();
+                    bottomPanel = MainFrame.this.setupBottomPanel(scrollElementsGoing, scrollElementsReturn, false);
                     GridBagConstraints c = new GridBagConstraints();
                     c.gridx = 0;
                     c.gridy = 2;
@@ -491,27 +538,51 @@ public class MainFrame extends javax.swing.JFrame {
         return topPanel;
     }
 
-    private JPanel setupBottomPanel(ArrayList<FlightListElementPanel> scrollElements, boolean keepFilters) {
+    private JPanel setupBottomPanel(ArrayList<FlightListElementPanel> scrollElementsGoing, ArrayList<FlightListElementPanel> scrollElementsReturn, boolean keepFilters) {
+        JPanel scrollPanelMain = new JPanel();
+
+        btnSwapFlightsTab.setFont(defaultFontSize5);
+
+        scrollPanelMain.setBackground(Color.MAGENTA);
+        scrollLayout = new CardLayout();
+        scrollPanelMain.setLayout(scrollLayout);
+
         bottomPanel = new JPanel();
         bottomPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         bottomPanel.setBackground(Color.red);
 
         if (!keepFilters) {
-            scrollPanel = createScrollPanel(scrollElements);
+            scrollPanelGoing = createScrollPanelGoing(scrollElementsGoing);
+            scrollPanelReturn = createScrollPanelReturn(scrollElementsReturn);
         }
+        scrollPanelGoing.setVisible(true);
+        scrollPanelReturn.setVisible(false);
+
+        scrollPanelMain.add(scrollPanelGoing);
+        scrollPanelMain.add(scrollPanelReturn);
 
         GridBagLayout panelLayout = new GridBagLayout();
         bottomPanel.setLayout(panelLayout);
         GridBagConstraints constraints = new GridBagConstraints();
+
+        constraints.anchor = GridBagConstraints.CENTER;
+        constraints.gridx = 1;
+        constraints.gridy = 0;
+        constraints.gridwidth = 1;
+        constraints.gridheight = 1;
+        constraints.weightx = 1;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        bottomPanel.add(btnSwapFlightsTab, constraints);
+
         constraints.anchor = GridBagConstraints.FIRST_LINE_START;
         constraints.gridx = 0;
-        constraints.gridy = 0;
+        constraints.gridy = 1;
         constraints.gridwidth = 3;
         constraints.gridheight = 1;
         constraints.weightx = 1;
         constraints.weighty = 1;
         constraints.fill = GridBagConstraints.BOTH;
-        bottomPanel.add(scrollPanel, constraints);
+        bottomPanel.add(scrollPanelMain, constraints);
 
         if (!keepFilters) {
             filtersPanel = new JPanel();
@@ -526,7 +597,7 @@ public class MainFrame extends javax.swing.JFrame {
         }
 
         constraints.gridx = 3;
-        constraints.gridy = 0;
+        constraints.gridy = 1;
         constraints.gridwidth = 1;
         constraints.gridheight = 1;
         constraints.weightx = 0.15;
@@ -538,30 +609,59 @@ public class MainFrame extends javax.swing.JFrame {
         return bottomPanel;
     }
 
-    private JScrollPane createScrollPanel(ArrayList<FlightListElementPanel> scrollElements) {
-        scrollPanelList = new ArrayList<>();
-        scrollInsidePanel = new JPanel();
+    private JScrollPane createScrollPanelGoing(ArrayList<FlightListElementPanel> scrollElements) {
+        scrollPanelListGoing = new ArrayList<>();
+        JPanel scrollInsidePanel = new JPanel();
         scrollInsidePanel.setBackground(Color.white);
         scrollInsidePanel.setLayout(new BoxLayout(scrollInsidePanel, BoxLayout.Y_AXIS));
 
         for (FlightListElementPanel p : scrollElements) {
             p.setPreferredSize(new Dimension(1, 227));
             scrollInsidePanel.add(p);
-            scrollPanelList.add(p);
+            scrollPanelListGoing.add(p);
         }
 
-        scrollPanel = new JScrollPane(scrollInsidePanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        scrollPanel.setBackground(Color.yellow);
+        scrollPanelGoing = new JScrollPane(scrollInsidePanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPanelGoing.setBackground(Color.yellow);
 
-        JScrollBar verticalScroll = scrollPanel.getVerticalScrollBar();
+        JScrollBar verticalScroll = scrollPanelGoing.getVerticalScrollBar();
         verticalScroll.setUnitIncrement(20);
         verticalScroll.setPreferredSize(new Dimension(verticalScroll.getPreferredSize().width - 5, verticalScroll.getPreferredSize().height));
-        scrollPanel.setVerticalScrollBar(verticalScroll);
-        return scrollPanel;
+        scrollPanelGoing.setVerticalScrollBar(verticalScroll);
+        return scrollPanelGoing;
+    }
+
+    private JScrollPane createScrollPanelReturn(ArrayList<FlightListElementPanel> scrollElements) {
+        scrollPanelListReturn = new ArrayList<>();
+        JPanel scrollInsidePanel = new JPanel();
+        scrollInsidePanel.setBackground(Color.white);
+        scrollInsidePanel.setLayout(new BoxLayout(scrollInsidePanel, BoxLayout.Y_AXIS));
+
+        for (FlightListElementPanel p : scrollElements) {
+            p.setPreferredSize(new Dimension(1, 227));
+            scrollInsidePanel.add(p);
+            scrollPanelListReturn.add(p);
+        }
+
+        scrollPanelReturn = new JScrollPane(scrollInsidePanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPanelReturn.setBackground(Color.yellow);
+
+        JScrollBar verticalScroll = scrollPanelReturn.getVerticalScrollBar();
+        verticalScroll.setUnitIncrement(20);
+        verticalScroll.setPreferredSize(new Dimension(verticalScroll.getPreferredSize().width - 5, verticalScroll.getPreferredSize().height));
+        scrollPanelReturn.setVerticalScrollBar(verticalScroll);
+        return scrollPanelReturn;
     }
 
     private void updateScrollPanel(ArrayList<FlightDetails> flights) {
-        for (FlightListElementPanel p : scrollPanelList) {
+        ArrayList<FlightListElementPanel> panels;
+        if(scrollPanelGoing.isVisible()){
+            panels = scrollPanelListGoing;
+        } else {
+            panels = scrollPanelListReturn;
+        }
+        
+        for (FlightListElementPanel p : panels) {
             p.setVisible(false);
             for (FlightDetails f : flights) {
                 if (p.getFlightDetails().equals(f)) {
@@ -574,7 +674,7 @@ public class MainFrame extends javax.swing.JFrame {
     }
 
     private void changePriceLevelColor() {
-        switch (priceLevel.toLowerCase()) {
+        switch (priceLevelGoing.toLowerCase()) {
             case "low":
                 lbPriceLevel.setForeground(Color.GREEN);
                 break;
@@ -587,15 +687,15 @@ public class MainFrame extends javax.swing.JFrame {
         }
     }
 
-    private ArrayList<FlightListElementPanel> getScrollPanelElements() {
+    private ArrayList<FlightListElementPanel> getScrollPanelElementsCache() {
         // Based on API response when searched returns a list of
         // panels matching the number of flights returned
         ArrayList<FlightListElementPanel> tmp = new ArrayList<>();
 
         Response r = parsearJSON(leerJSON(PATHCACHE));
         priceInsights = r.getPrice_insights();
-        priceLevel = r.getPrice_insights().getPrice_level();
-        lbPriceLevel.setText(priceLevel);
+        priceLevelGoing = r.getPrice_insights().getPrice_level();
+        lbPriceLevel.setText(priceLevelGoing);
         changePriceLevelColor();
 
         System.out.println(r.getPrice_insights());
@@ -611,22 +711,43 @@ public class MainFrame extends javax.swing.JFrame {
         return tmp;
     }
 
-    private ArrayList<FlightListElementPanel> getScrollPanelElements(String from, String to, String going, String returnal, String type, String passengers) {
+    private ArrayList<FlightListElementPanel> getScrollPanelElementsGoing(String from, String to, String going, String returnal, String type, String passengers) {
         // Based on API response when searched returns a list of
         // panels matching the number of flights returned
         ArrayList<FlightListElementPanel> tmp = new ArrayList<>();
 
         peticionAPI(from, to, going, returnal, "EUR", type, passengers, PATHEXAMPLE);
-        Response r = parsearJSON(leerJSON(PATHEXAMPLE));
-        priceLevel = r.getPrice_insights().getPrice_level();
-        lbPriceLevel.setText("Price Level: " + priceLevel);
+        Response rGoing = parsearJSON(leerJSON(PATHEXAMPLE + "/going.json"));
+        priceInsights = rGoing.getPrice_insights();
+        priceLevelGoing = rGoing.getPrice_insights().getPrice_level();
         changePriceLevelColor();
 
-        flights = getFrontEndDetails(r.getBest_flights(), r.getOther_flights());
+        flights = getFrontEndDetails(rGoing.getBest_flights(), rGoing.getOther_flights());
 
         getPriceRange();
 
         for (FlightDetails f : flights) {
+            tmp.add(new FlightListElementPanel(this, homePanel, f));
+        }
+
+        return tmp;
+    }
+
+    private ArrayList<FlightListElementPanel> getScrollPanelElementsReturn() {
+        // Based on API response when searched returns a list of
+        // panels matching the number of flights returned
+        ArrayList<FlightListElementPanel> tmp = new ArrayList<>();
+
+        Response rReturn = parsearJSON(leerJSON(PATHEXAMPLE + "/return.json"));
+        priceInsights = rReturn.getPrice_insights();
+        priceLevelReturn = rReturn.getPrice_insights().getPrice_level();
+        changePriceLevelColor();
+
+        flightsReturn = getFrontEndDetails(rReturn.getBest_flights(), rReturn.getOther_flights());
+
+        getPriceRange();
+
+        for (FlightDetails f : flightsReturn) {
             tmp.add(new FlightListElementPanel(this, homePanel, f));
         }
 
@@ -642,7 +763,7 @@ public class MainFrame extends javax.swing.JFrame {
         rightCol.setBackground(Color.cyan);
 
         ArrayList<JRadioButton> rbs = new ArrayList<>();
-        ArrayList<JCheckBox> cbs = new ArrayList<>();
+        cbs = new ArrayList<>();
 
         int counter = 0;
         JLabel lbLayover = new JLabel("Layover Filters");
@@ -1034,6 +1155,7 @@ public class MainFrame extends javax.swing.JFrame {
         lbPriceSelected.setText("Up to " + priceInsights.getLowest_price());
         slPriceRange.setMinimum(priceInsights.getLowest_price());
         slPriceRange.setMaximum(max);
+        slPriceRange.setValue(priceInsights.getLowest_price());
         maxPrice = max;
     }
 
@@ -1048,25 +1170,30 @@ public class MainFrame extends javax.swing.JFrame {
             type = "2";
         }
         try {
+            btnSwapFlightsTab.setEnabled(false);
 
             String engine = "google_flights";
-            String api_key = "cb86689dbb1f68e6363ba7c5ecf4604177d0e21cd801037bd8e35ef77a43e271";
+            String apiKey = "cb86689dbb1f68e6363ba7c5ecf4604177d0e21cd801037bd8e35ef77a43e271";
 
-            String link = "https://serpapi.com/search.json?engine=" + engine + "&departure_id=" + departureId + "&arrival_id=" + arrivalId + "&gl=us&hl=en&adults=" + passengers;
+            String linkGoing = "https://serpapi.com/search.json?engine=" + engine + "&departure_id=" + departureId + "&arrival_id=" + arrivalId + "&gl=us&hl=en&adults=" + passengers;
+            String linkReturn = "https://serpapi.com/search.json?engine=" + engine + "&departure_id=" + arrivalId + "&arrival_id=" + departureId + "&gl=us&hl=en&adults=" + passengers;
+
             if (currency != null && !currency.isBlank()) {
-                link += "&currency=" + currency;
+                linkGoing += "&currency=" + currency;
+                linkReturn += "&currency=" + currency;
             }
-            link += "&type=" + type;
+            linkGoing += "&type=" + "2";
+            linkReturn += "&type=" + "2";
             if (departureDate != null && !departureDate.isBlank()) {
-                link += "&outbound_date=" + departureDate;
+                linkGoing += "&outbound_date=" + departureDate;
+                linkReturn += "&outbound_date=" + returnDate;
             }
-            if (returnDate != null && !returnDate.isBlank() && !type.equalsIgnoreCase("2")) {
-                link += "&return_date=" + returnDate;
-            }
-            link += "&api_key=" + api_key;
+            linkGoing += "&api_key=" + apiKey;
+            linkReturn += "&api_key=" + apiKey;
 
-            System.out.println(link);
-            URL url = new URL(link);
+            System.out.println(linkGoing);
+
+            URL url = new URL(linkGoing);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
             conn.setRequestProperty("Accept", "application/json");
@@ -1083,8 +1210,33 @@ public class MainFrame extends javax.swing.JFrame {
                 result += output;
             }
             System.out.println(result);
-            guardarJSON(result, savePath);
+            guardarJSON(result, savePath + "/going.json");
             conn.disconnect();
+
+            if (type.equalsIgnoreCase("1")) {
+                btnSwapFlightsTab.setEnabled(true);
+
+                System.out.println(linkReturn);
+
+                url = new URL(linkReturn);
+                conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                conn.setRequestProperty("Accept", "application/json");
+
+                if (conn.getResponseCode() != 200) {
+                    throw new RuntimeException("Failed : HTTP Error code : "
+                            + conn.getResponseCode());
+                }
+                in = new InputStreamReader(conn.getInputStream());
+                br = new BufferedReader(in);
+                result = "";
+                while ((output = br.readLine()) != null) {
+                    result += output;
+                }
+                System.out.println(result);
+                guardarJSON(result, savePath + "/return.json");
+                conn.disconnect();
+            }
         } catch (Exception e) {
             System.out.println("Exception in NetClientGet:- " + e);
         }
