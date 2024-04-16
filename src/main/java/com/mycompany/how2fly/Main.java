@@ -10,12 +10,15 @@ import com.mycompany.how2fly.pojo.frontend.FlightDetails;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 
 public class Main {
 
     public static void main(String[] args) {
+        LocalDateTime a = LocalDateTime.now();
+        System.out.println(a);
         //peticionAPI();
         /*
         Gson gson = new Gson();

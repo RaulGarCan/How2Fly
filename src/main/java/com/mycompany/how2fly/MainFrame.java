@@ -116,6 +116,8 @@ public class MainFrame extends javax.swing.JFrame {
 
         createHomePanel();
 
+        updateCache();
+
         GridLayout frameLayout = new GridLayout(0, 1);
         this.setLayout(frameLayout);
         this.add(homePanel);
@@ -126,8 +128,54 @@ public class MainFrame extends javax.swing.JFrame {
     private void updateCache() {
         LocalDateTime dateTime = FlightListElementPanel.parseDateTime(flights.getFirst().getFlights().getFirst().getDeparture_airport().getTime().split(" "));
         LocalDate now = LocalDate.now();
-        if (!now.getMonth().equals(dateTime.getMonth())) {
-            peticionAPI("CDG", "AUS", "", "", "EUR", PATHCACHE, priceLevel, PATHCACHE);
+        System.out.println(dateTime.getMonth());
+        System.out.println(now.getMonth());
+        System.out.println(dateTime.getMonthValue());
+        System.out.println(now.getMonthValue());
+        if (now.getMonthValue() >= dateTime.getMonthValue()) {
+            int year = now.getYear();
+            int month = now.getMonthValue() + 1;
+            if (month == 12) { // Reset month & year+1
+                month = 1;
+                year++;
+            }
+            int days = 15;
+            String departureDate = "";
+            departureDate += year + "-";
+            if (month < 10) {
+                departureDate += "0";
+            }
+            departureDate += month + "-";
+            departureDate += days;
+
+            days = 25;
+            String returnDate = "";
+            returnDate += year + "-";
+            if (month < 10) {
+                returnDate += "0";
+            }
+            returnDate += month + "-";
+            returnDate += days;
+            System.out.println(departureDate);
+            System.out.println(returnDate);
+
+            peticionAPI("CDG", "AUS", departureDate, returnDate, "EUR", "One Way", "1", PATHCACHE);
+            
+            homePanel.remove(bottomPanel);
+            ArrayList<FlightListElementPanel> scrollElements = getScrollPanelElements();
+            bottomPanel = MainFrame.this.setupBottomPanel(scrollElements, false);
+            GridBagConstraints c = new GridBagConstraints();
+            c.gridx = 0;
+            c.gridy = 2;
+            c.gridheight = 3;
+            c.gridwidth = 3;
+            c.weighty = 1;
+            c.weightx = 1;
+            c.fill = GridBagConstraints.BOTH;
+            homePanel.add(bottomPanel, c);
+
+            MainFrame.this.revalidate();
+            MainFrame.this.repaint();
         }
     }
 
@@ -872,7 +920,7 @@ public class MainFrame extends javax.swing.JFrame {
             }
         } else {
             for (FlightDetails f : filteredFlights) {
-                if (f.getLayovers().size() >= nLayover) {
+                if (f.getLayovers().size() >= 0) {
                     result.add(f);
                 }
             }
@@ -1012,7 +1060,7 @@ public class MainFrame extends javax.swing.JFrame {
             if (departureDate != null && !departureDate.isBlank()) {
                 link += "&outbound_date=" + departureDate;
             }
-            if (returnDate != null && !returnDate.isBlank()) {
+            if (returnDate != null && !returnDate.isBlank() && !type.equalsIgnoreCase("2")) {
                 link += "&return_date=" + returnDate;
             }
             link += "&api_key=" + api_key;

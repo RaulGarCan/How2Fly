@@ -12,7 +12,7 @@ public enum FlightFilters {
     LAYOVER1 ("1 Layover"),
     LAYOVER2 ("2 Layovers"),
     LAYOVER3 ("3 Layovers"),
-    LAYOVERS ("Rest of Layovers"),
+    LAYOVERS ("All Layovers"),
     
     SHORTDURATION ("Short Duration"),
     MIDDURATION ("Mid Duration"),
