@@ -17,12 +17,14 @@ import java.util.Comparator;
 public class Main {
 
     public static void main(String[] args) {
-        LocalDateTime a = LocalDateTime.now();
-        System.out.println(a);
-        //peticionAPI();
-        /*
+        System.out.println(System.getProperty("user.home"));
+    }
+    
+    public static void createAirportsJSON(){
+        peticionAPI();
+        
         Gson gson = new Gson();
-        AirportList[] airports = gson.fromJson(leerJSON(MainFrame.pathCacheAirport), AirportList[].class);
+        AirportList[] airports = gson.fromJson(leerJSON(MainFrame.PATHCACHEAIRPORT), AirportList[].class);
         ArrayList<AirportList> tmp = new ArrayList<>();
         for (AirportList a : airports) {
             tmp.add(a);
@@ -34,8 +36,13 @@ public class Main {
             }
         });
         String json = gson.toJson(tmp.toArray(AirportList[]::new));
-        guardarJSON(json, MainFrame.pathCacheAirport2);
-        */
+        guardarJSON(json, MainFrame.PATHCACHEAIRPORTREAL);
+        
+        deleteAirportFirstJSON();
+    }
+    private static void deleteAirportFirstJSON(){
+        File tmp = new File(MainFrame.PATHCACHEAIRPORT);
+        tmp.delete();
     }
 
     private ArrayList<AirportList> airportsPerLetter(char letter, AirportList[] airports) {

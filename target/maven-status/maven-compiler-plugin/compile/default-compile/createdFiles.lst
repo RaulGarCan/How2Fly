@@ -15,6 +15,7 @@ com\mycompany\how2fly\MainFrame.class
 com\mycompany\how2fly\MainFrame$4.class
 com\mycompany\how2fly\pojo\BestFlights.class
 com\mycompany\how2fly\MainFrame$17.class
+com\mycompany\how2fly\Cache.class
 com\mycompany\how2fly\MainFrame$11.class
 com\mycompany\how2fly\pojo\OtherFlights.class
 com\mycompany\how2fly\Main.class
@@ -33,5 +34,6 @@ com\mycompany\how2fly\pojo\SearchMetadata.class
 com\mycompany\how2fly\pojo\CarbonEmission.class
 com\mycompany\how2fly\MainFrame$15.class
 com\mycompany\how2fly\MainFrame$3.class
+com\mycompany\how2fly\Main$1.class
 com\mycompany\how2fly\MainFrame$10.class
 com\mycompany\how2fly\pojo\PriceInsights.class

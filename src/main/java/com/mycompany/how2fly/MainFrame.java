@@ -54,6 +54,7 @@ import com.mycompany.how2fly.pojo.filters.FlightFilters;
 import java.awt.CardLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
@@ -71,6 +72,7 @@ import javax.swing.event.ChangeListener;
  */
 public class MainFrame extends javax.swing.JFrame {
 
+    public static final String currentUserHome = System.getProperty("user.home");
     private ArrayList<JCheckBox> cbs;
     private CardLayout scrollLayout;
     private JButton btnSwapFlightsTab;
@@ -84,7 +86,7 @@ public class MainFrame extends javax.swing.JFrame {
     private ArrayList<FlightFilters> activeFilters;
     private int maxPrice;
     private JSlider slPriceRange;
-    private PriceInsights priceInsights;
+    private PriceInsights priceInsightsGoing, priceInsightsReturn;
     private static String priceLevelGoing, priceLevelReturn;
     private JLabel lbPriceLevel, lbPriceSelected;
     private ArrayList<FlightDetails> flights, flightsReturn;
@@ -92,9 +94,13 @@ public class MainFrame extends javax.swing.JFrame {
     private JTextField tfGoing, tfReturn;
     private JComboBox cbPassenger, cbType, cbFrom, cbTo;
     public static Font defaultFontSize5Bold, defaultFontSize2, defaultFontSize5, defaultFontHeader, defaultFontHeaderBold;
-    public static final String PATHEXAMPLE = "./src/main/java/com/mycompany/how2fly/data";
-    public static final String PATHCACHE = "./src/main/java/com/mycompany/how2fly/cache/cache.json";
-    public static final String PATHCACHEAIRPORT = "./src/main/java/com/mycompany/how2fly/cache/airports.json";
+
+    public static final String PATHBASE = currentUserHome + "/Documents/How2Fly";
+    public static final String PATHDATA = PATHBASE + "/data";
+    public static final String PATHCACHE = PATHBASE + "/cache";
+    public static final String PATHCACHEAIRPORT = PATHCACHE + "/airports2.json";
+    public static final String PATHCACHEAIRPORTREAL = PATHCACHE + "/airports.json";
+
     private JPanel homePanel;
     private final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 
@@ -102,8 +108,28 @@ public class MainFrame extends javax.swing.JFrame {
      * Creates new form MainFrame
      */
     public MainFrame() {
+        createFileTree();
+        File airports = new File(PATHCACHEAIRPORTREAL);
+        if(!airports.exists()){
+            Main.createAirportsJSON();
+        }
+        File cache = new File(PATHCACHE+"/cache.json");
+        if(!cache.exists()){
+            Main.guardarJSON(Cache.cacheJSON, PATHCACHE+"/cache.json");
+        }
         initComponents();
         start();
+    }
+
+    private void createFileTree() {
+        File cacheDir = new File(PATHCACHE);
+        File dataDir = new File(PATHDATA);
+        if (!cacheDir.exists()) {
+            cacheDir.mkdirs();
+        }
+        if (!dataDir.exists()) {
+            dataDir.mkdirs();
+        }
     }
 
     private void start() {
@@ -114,38 +140,7 @@ public class MainFrame extends javax.swing.JFrame {
         btnSwapFlightsTab.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                bgDayTime.clearSelection();
-                bgLayovers.clearSelection();
-
-                activeFilters.clear();
-                loadFilters();
-                for (JCheckBox cb : cbs) {
-                    cb.setSelected(false);
-                }
-                cbApplyPrice.setSelected(false);
-                if (scrollPanelGoing.isVisible()) {
-                    System.out.println("Going to Return");
-                    scrollPanelGoing.setVisible(false);
-                    scrollPanelReturn.setVisible(true);
-                    btnSwapFlightsTab.setText("Going Flights");
-                    lbPriceLevel.setText("Price Level: " + priceLevelReturn);
-
-                } else {
-                    System.out.println("Return to Going");
-                    scrollPanelReturn.setVisible(false);
-                    scrollPanelGoing.setVisible(true);
-                    btnSwapFlightsTab.setText("Return Flights");
-                    lbPriceLevel.setText("Price Level: " + priceLevelGoing);
-                }
-
-                ArrayList<FlightDetails> tmp = flights;
-                flights = flightsReturn;
-                flightsReturn = tmp;
-
-                getPriceRange();
-
-                MainFrame.this.revalidate();
-                MainFrame.this.repaint();
+                swapFlightsTab();
             }
         });
 
@@ -169,6 +164,72 @@ public class MainFrame extends javax.swing.JFrame {
         this.add(homePanel);
 
         this.setExtendedState(MAXIMIZED_BOTH);
+    }
+
+    private void swapFlightsTab() {
+        bgDayTime.clearSelection();
+        bgLayovers.clearSelection();
+
+        activeFilters.clear();
+        loadFilters();
+        for (JCheckBox cb : cbs) {
+            cb.setSelected(false);
+        }
+        cbApplyPrice.setSelected(false);
+
+        ArrayList<FlightDetails> tmp = flights;
+        flights = flightsReturn;
+        flightsReturn = tmp;
+
+        if (scrollPanelGoing.isVisible()) {
+            System.out.println("Going to Return");
+            scrollPanelGoing.setVisible(false);
+            scrollPanelReturn.setVisible(true);
+            btnSwapFlightsTab.setText("Going Flights");
+            getPriceRange(priceInsightsReturn);
+            lbPriceLevel.setText(priceLevelReturn);
+            changePriceLevelColor(priceLevelReturn);
+        } else {
+            System.out.println("Return to Going");
+            scrollPanelReturn.setVisible(false);
+            scrollPanelGoing.setVisible(true);
+            btnSwapFlightsTab.setText("Return Flights");
+            getPriceRange(priceInsightsGoing);
+            lbPriceLevel.setText(priceLevelGoing);
+            changePriceLevelColor(priceLevelGoing);
+        }
+
+        MainFrame.this.revalidate();
+        MainFrame.this.repaint();
+    }
+
+    private void showDefaultFlightTab() {
+        bgDayTime.clearSelection();
+        bgLayovers.clearSelection();
+
+        activeFilters.clear();
+        loadFilters();
+        for (JCheckBox cb : cbs) {
+            cb.setSelected(false);
+        }
+        cbApplyPrice.setSelected(false);
+
+        if (scrollPanelReturn.isVisible()) {
+            ArrayList<FlightDetails> tmp = flights;
+            flights = flightsReturn;
+            flightsReturn = tmp;
+
+            System.out.println("Return to Going");
+            scrollPanelReturn.setVisible(false);
+            scrollPanelGoing.setVisible(true);
+            btnSwapFlightsTab.setText("Return Flights");
+            getPriceRange(priceInsightsGoing);
+            lbPriceLevel.setText(priceLevelGoing);
+            changePriceLevelColor(priceLevelGoing);
+        }
+
+        MainFrame.this.revalidate();
+        MainFrame.this.repaint();
     }
 
     private void updateCache() {
@@ -205,7 +266,7 @@ public class MainFrame extends javax.swing.JFrame {
             System.out.println(departureDate);
             System.out.println(returnDate);
 
-            peticionAPI("CDG", "AUS", departureDate, returnDate, "EUR", "One Way", "1", PATHCACHE);
+            peticionAPI("CDG", "AUS", departureDate, returnDate, "EUR", "One Way", "1", PATHCACHE + "/cache.json");
 
             homePanel.remove(bottomPanel);
             ArrayList<FlightListElementPanel> scrollElements = getScrollPanelElementsCache();
@@ -227,7 +288,7 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void fillAirports(JComboBox<String> cb) {
         Gson gson = new Gson();
-        AirportList[] airports = gson.fromJson(leerJSON(MainFrame.PATHCACHEAIRPORT), AirportList[].class);
+        AirportList[] airports = gson.fromJson(leerJSON(MainFrame.PATHCACHEAIRPORTREAL), AirportList[].class);
         for (AirportList a : airports) {
             cb.addItem(a.getIataCode());
         }
@@ -330,7 +391,7 @@ public class MainFrame extends javax.swing.JFrame {
         lbPriceLevel = new JLabel();
         lbPriceLevel.setFont(defaultFontHeaderBold);
         homePanel = new JPanel();
-        homePanel.setBackground(Color.GREEN);
+        homePanel.setBackground(Color.LIGHT_GRAY);
 
         GridBagLayout homeLayout = new GridBagLayout();
         GridBagConstraints constraints = new GridBagConstraints();
@@ -485,6 +546,8 @@ public class MainFrame extends javax.swing.JFrame {
             public void mouseClicked(MouseEvent e) {
                 JTextField[] tfs = {tfGoing, tfReturn};
                 if (checkFields(tfs)) {
+                    showDefaultFlightTab();
+
                     String from = cbFrom.getSelectedItem().toString();
                     String to = cbTo.getSelectedItem().toString();
                     String going = tfGoing.getText();
@@ -655,12 +718,12 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void updateScrollPanel(ArrayList<FlightDetails> flights) {
         ArrayList<FlightListElementPanel> panels;
-        if(scrollPanelGoing.isVisible()){
+        if (scrollPanelGoing.isVisible()) {
             panels = scrollPanelListGoing;
         } else {
             panels = scrollPanelListReturn;
         }
-        
+
         for (FlightListElementPanel p : panels) {
             p.setVisible(false);
             for (FlightDetails f : flights) {
@@ -673,8 +736,8 @@ public class MainFrame extends javax.swing.JFrame {
         MainFrame.this.repaint();
     }
 
-    private void changePriceLevelColor() {
-        switch (priceLevelGoing.toLowerCase()) {
+    private void changePriceLevelColor(String priceLevel) {
+        switch (priceLevel.toLowerCase()) {
             case "low":
                 lbPriceLevel.setForeground(Color.GREEN);
                 break;
@@ -692,17 +755,18 @@ public class MainFrame extends javax.swing.JFrame {
         // panels matching the number of flights returned
         ArrayList<FlightListElementPanel> tmp = new ArrayList<>();
 
-        Response r = parsearJSON(leerJSON(PATHCACHE));
-        priceInsights = r.getPrice_insights();
+        Response r = parsearJSON(leerJSON(PATHCACHE + "/cache.json"));
+        priceInsightsGoing = r.getPrice_insights();
         priceLevelGoing = r.getPrice_insights().getPrice_level();
         lbPriceLevel.setText(priceLevelGoing);
-        changePriceLevelColor();
 
         System.out.println(r.getPrice_insights());
 
         flights = getFrontEndDetails(r.getBest_flights(), r.getOther_flights());
 
-        getPriceRange();
+        getPriceRange(priceInsightsGoing);
+
+        changePriceLevelColor(priceLevelGoing);
 
         for (FlightDetails f : flights) {
             tmp.add(new FlightListElementPanel(this, homePanel, f));
@@ -716,15 +780,17 @@ public class MainFrame extends javax.swing.JFrame {
         // panels matching the number of flights returned
         ArrayList<FlightListElementPanel> tmp = new ArrayList<>();
 
-        peticionAPI(from, to, going, returnal, "EUR", type, passengers, PATHEXAMPLE);
-        Response rGoing = parsearJSON(leerJSON(PATHEXAMPLE + "/going.json"));
-        priceInsights = rGoing.getPrice_insights();
+        peticionAPI(from, to, going, returnal, "EUR", type, passengers, PATHDATA);
+        Response rGoing = parsearJSON(leerJSON(PATHDATA + "/going.json"));
+        priceInsightsGoing = rGoing.getPrice_insights();
         priceLevelGoing = rGoing.getPrice_insights().getPrice_level();
-        changePriceLevelColor();
+        lbPriceLevel.setText(priceLevelGoing);
 
         flights = getFrontEndDetails(rGoing.getBest_flights(), rGoing.getOther_flights());
 
-        getPriceRange();
+        getPriceRange(priceInsightsGoing);
+
+        changePriceLevelColor(priceLevelGoing);
 
         for (FlightDetails f : flights) {
             tmp.add(new FlightListElementPanel(this, homePanel, f));
@@ -738,14 +804,11 @@ public class MainFrame extends javax.swing.JFrame {
         // panels matching the number of flights returned
         ArrayList<FlightListElementPanel> tmp = new ArrayList<>();
 
-        Response rReturn = parsearJSON(leerJSON(PATHEXAMPLE + "/return.json"));
-        priceInsights = rReturn.getPrice_insights();
+        Response rReturn = parsearJSON(leerJSON(PATHDATA + "/return.json"));
+        priceInsightsReturn = rReturn.getPrice_insights();
         priceLevelReturn = rReturn.getPrice_insights().getPrice_level();
-        changePriceLevelColor();
 
         flightsReturn = getFrontEndDetails(rReturn.getBest_flights(), rReturn.getOther_flights());
-
-        getPriceRange();
 
         for (FlightDetails f : flightsReturn) {
             tmp.add(new FlightListElementPanel(this, homePanel, f));
@@ -794,7 +857,7 @@ public class MainFrame extends javax.swing.JFrame {
         lbPriceRange.setFont(defaultFontSize5Bold);
         leftCol.add(lbPriceRange);
         lbPriceSelected.setFont(defaultFontSize2);
-        int nDigits = String.valueOf(priceInsights.getLowest_price()).length();
+        int nDigits = String.valueOf(priceInsightsGoing.getLowest_price()).length();
         String s = "1";
         for (int i = 0; i < nDigits; i++) {
             s += "0";
@@ -1127,10 +1190,10 @@ public class MainFrame extends javax.swing.JFrame {
 
     private ArrayList<FlightDetails> filterPriceRange() {
         ArrayList<FlightDetails> result = new ArrayList<>();
-        System.out.println("Lowest Price: " + priceInsights.getLowest_price());
+        System.out.println("Lowest Price: " + priceInsightsGoing.getLowest_price());
         System.out.println("Price Selected: " + priceSelected);
         for (FlightDetails f : filteredFlights) {
-            if (f.getPrice() >= priceInsights.getLowest_price() && f.getPrice() <= priceSelected) {
+            if (f.getPrice() >= priceInsightsGoing.getLowest_price() && f.getPrice() <= priceSelected) {
                 System.out.println(f.getPrice());
                 result.add(f);
             }
@@ -1144,18 +1207,18 @@ public class MainFrame extends javax.swing.JFrame {
         updateScrollPanel(filteredFlights);
     }
 
-    private void getPriceRange() {
+    private void getPriceRange(PriceInsights priceInsight) {
         int max = flights.getFirst().getPrice();
         for (FlightDetails f : flights) {
             if (f.getPrice() > max) {
                 max = f.getPrice();
             }
         }
-        priceSelected = priceInsights.getLowest_price();
-        lbPriceSelected.setText("Up to " + priceInsights.getLowest_price());
-        slPriceRange.setMinimum(priceInsights.getLowest_price());
+        priceSelected = priceInsight.getLowest_price();
+        lbPriceSelected.setText("Up to " + priceInsight.getLowest_price());
+        slPriceRange.setMinimum(priceInsight.getLowest_price());
         slPriceRange.setMaximum(max);
-        slPriceRange.setValue(priceInsights.getLowest_price());
+        slPriceRange.setValue(priceInsight.getLowest_price());
         maxPrice = max;
     }
 
