@@ -60,7 +60,7 @@ public class FlightListElementPanel extends javax.swing.JPanel {
     
     private void start() {
         this.setBorder(BorderFactory.createLineBorder(Color.black));
-        this.setBackground(Color.yellow);
+        //this.setBackground(Color.yellow);
         GridBagLayout mainLayout = new GridBagLayout();
         GridBagConstraints constraints = new GridBagConstraints();
         this.setLayout(mainLayout);
@@ -97,7 +97,7 @@ public class FlightListElementPanel extends javax.swing.JPanel {
 
         JPanel infoPanel = new JPanel();
         infoPanel.setToolTipText("Press for Details");
-        infoPanel.setBackground(Color.MAGENTA);
+        //infoPanel.setBackground(Color.MAGENTA);
 
         sendToDetailsListener(infoPanel);
 

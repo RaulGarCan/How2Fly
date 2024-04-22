@@ -6,6 +6,7 @@ package com.mycompany.how2fly;
 
 import com.google.gson.Gson;
 import static com.mycompany.how2fly.Main.leerJSON;
+import com.mycompany.how2fly.pojo.ApiKey;
 import com.mycompany.how2fly.pojo.BestFlights;
 import com.mycompany.how2fly.pojo.Flight;
 import com.mycompany.how2fly.pojo.OtherFlights;
@@ -52,13 +53,24 @@ import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 import com.mycompany.how2fly.pojo.filters.FlightFilters;
 import java.awt.CardLayout;
+import java.awt.Cursor;
+import java.awt.Desktop;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.font.TextAttribute;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.ButtonGroup;
+import javax.swing.JDialog;
 import javax.swing.JRadioButton;
 import javax.swing.JSlider;
 import javax.swing.UIDefaults;
@@ -72,9 +84,11 @@ import javax.swing.event.ChangeListener;
  */
 public class MainFrame extends javax.swing.JFrame {
 
+    private String apiKey;
     public static final String currentUserHome = System.getProperty("user.home");
     private ArrayList<JCheckBox> cbs;
     private CardLayout scrollLayout;
+    private JDialog dialog;
     private JButton btnSwapFlightsTab;
     private ButtonGroup bgDayTime, bgLayovers;
     private JCheckBox cbApplyPrice;
@@ -94,12 +108,15 @@ public class MainFrame extends javax.swing.JFrame {
     private JTextField tfGoing, tfReturn;
     private JComboBox cbPassenger, cbType, cbFrom, cbTo;
     public static Font defaultFontSize5Bold, defaultFontSize2, defaultFontSize5, defaultFontHeader, defaultFontHeaderBold;
+    private JPanel panelEnterKey;
+    private JLabel lbRegister;
 
     public static final String PATHBASE = currentUserHome + "/Documents/How2Fly";
     public static final String PATHDATA = PATHBASE + "/data";
     public static final String PATHCACHE = PATHBASE + "/cache";
     public static final String PATHCACHEAIRPORT = PATHCACHE + "/airports2.json";
     public static final String PATHCACHEAIRPORTREAL = PATHCACHE + "/airports.json";
+    public static final String PATHAPIKEY = PATHCACHE + "/key.json";
 
     private JPanel homePanel;
     private final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -108,16 +125,304 @@ public class MainFrame extends javax.swing.JFrame {
      * Creates new form MainFrame
      */
     public MainFrame() {
+        initComponents();
+        enterKeyStart();
+    }
+
+    private void enterKeyStart() {
+        this.setBounds(0, 0, 500, 250);
+
+        GridLayout frameLayout = new GridLayout(0, 1);
+        this.setLayout(frameLayout);
+
+        panelEnterKey = new JPanel();
+        JLabel lbKey = new JLabel("API Key: ");
+
+        defaultFontSize5Bold = new Font(lbKey.getFont().getName(), Font.BOLD, lbKey.getFont().getSize() + 5);
+        defaultFontSize5 = new Font(lbKey.getFont().getName(), lbKey.getFont().getStyle(), lbKey.getFont().getSize() + 5);
+        defaultFontSize2 = new Font(lbKey.getFont().getName(), lbKey.getFont().getStyle(), lbKey.getFont().getSize() + 2);
+        defaultFontHeaderBold = new Font(lbKey.getFont().getName(), Font.BOLD, lbKey.getFont().getSize() + 10);
+        defaultFontHeader = new Font(lbKey.getFont().getName(), lbKey.getFont().getStyle(), lbKey.getFont().getSize() + 10);
+
+        lbKey.setFont(defaultFontSize5Bold);
+
+        JTextField tfKey = new JTextField();
+        tfKey.setFont(defaultFontSize5);
+
+        // Opens a dialog asking for confirmation
+        // Checks if key is valid and if true runs MainFrame
+        // To check if its valid it will run the MainFrame and detect HTTP forbidden code
+        JButton btnContinue = new JButton("Continue");
+        btnContinue.setFont(defaultFontSize5);
+
+        // Load the saved key (if it exists)
+        JButton btnReset = new JButton("Reset");
+        btnReset.setFont(defaultFontSize5);
+
+        // Clears the tfKey content
+        JButton btnClear = new JButton("Clear");
+        btnClear.setFont(defaultFontSize5);
+
+        keyMenuButtons(btnContinue, btnReset, btnClear, tfKey);
+
+        // Load the actual key
+        loadKey(tfKey);
+
+        // Clickable label link-style decoration that redirects to serpapi register page
+        lbRegister = new JLabel("Don't have a key? Register here!");
+        Font linkFont = defaultFontSize5Bold;
+        Map attributes = linkFont.getAttributes();
+        attributes.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
+        lbRegister.setFont(linkFont.deriveFont(attributes));
+        lbRegister.setForeground(Color.blue);
+        lbRegister.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        lbRegister.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                URI serpapi;
+                try {
+                    serpapi = new URI("https://serpapi.com/users/sign_in");
+                    Desktop.getDesktop().browse(serpapi);
+                } catch (URISyntaxException | IOException ex) {
+                    System.out.println(ex);
+                }
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                lbRegister.setForeground(new Color(128, 0, 128));
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                lbRegister.setForeground(Color.blue);
+            }
+        });
+
+        GridBagConstraints c = new GridBagConstraints();
+        GridBagLayout layout = new GridBagLayout();
+        panelEnterKey.setLayout(layout);
+
+        c.gridx = 0;
+        c.gridy = 0;
+        c.gridheight = 1;
+        c.gridwidth = 1;
+
+        c.insets = new Insets(10, 10, 10, 0);
+
+        panelEnterKey.add(lbKey, c);
+
+        c.gridx = 1;
+        c.gridwidth = 8;
+        c.weightx = 1;
+        c.fill = GridBagConstraints.HORIZONTAL;
+
+        c.insets = new Insets(10, 0, 10, 10);
+
+        panelEnterKey.add(tfKey, c);
+
+        c.gridx = 0;
+        c.gridy = 1;
+        c.gridwidth = 2;
+        c.gridheight = 1;
+        c.weightx = 1;
+
+        c.insets = new Insets(0, 10, 0, 0);
+
+        panelEnterKey.add(btnContinue, c);
+
+        c.gridx = 2;
+
+        c.insets = new Insets(0, 10, 0, 10);
+
+        panelEnterKey.add(btnReset, c);
+
+        c.gridx = 4;
+
+        c.insets = new Insets(0, 0, 0, 10);
+
+        panelEnterKey.add(btnClear, c);
+
+        c.gridx = 3;
+        c.gridy = 2;
+        c.gridwidth = 8;
+        c.gridheight = 1;
+        c.weightx = 1;
+        c.fill = GridBagConstraints.HORIZONTAL;
+
+        c.insets = new Insets(10, 10, 0, 10);
+
+        panelEnterKey.add(lbRegister, c);
+
+        this.add(panelEnterKey);
+        this.revalidate();
+        this.repaint();
+    }
+
+    private void loadKey(JTextField tf) {
+        File keyFile = new File(PATHAPIKEY);
+        if (keyFile.exists()) {
+            Gson gson = new Gson();
+            ApiKey key = gson.fromJson(leerJSON(PATHAPIKEY), ApiKey.class);
+            tf.setText(key.getKey());
+            tf.setEnabled(false);
+        }
+    }
+
+    private void keyMenuButtons(JButton btnContinue, JButton btnReset, JButton btnClear, JTextField tfKey) {
+        btnContinue.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (!tfKey.getText().isBlank() && !tfKey.getText().isEmpty()) {
+                    String warningText = "The introduced key will replace the actual.";
+                    ActionListener action = new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            MainFrame.this.continueButton(tfKey);
+                        }
+                    };
+                    createDialogConfirm(warningText, action);
+                }
+            }
+        });
+        btnReset.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                resetButton(tfKey);
+            }
+        });
+        btnClear.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                clearButton(tfKey);
+            }
+        });
+    }
+
+    private void createDialogConfirm(String warningText, ActionListener confirmAction) {
+        dialog = new JDialog(this, true);
+        dialog.setBounds(0, 0, 500, 300);
+        dialog.setLayout(new GridLayout(0, 1));
+
+        JPanel panelDialog = new JPanel();
+        panelDialog.setBounds(0, 0, 500, 500);
+        JLabel lbWarning = new JLabel(warningText);
+        lbWarning.setFont(defaultFontSize5);
+        JLabel lbAdvice = new JLabel("(Make sure to insert a valid key)");
+        lbAdvice.setFont(defaultFontSize5);
+        JLabel lbQuestion = new JLabel("Are you sure you want to proceed?");
+        lbQuestion.setFont(defaultFontSize5);
+        JButton btnConfirm = new JButton("Confirm");
+        btnConfirm.setFont(defaultFontSize5);
+        btnConfirm.addActionListener(confirmAction);
+        JButton btnCancel = new JButton("Cancel");
+        btnCancel.setFont(defaultFontSize5);
+        btnCancel.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dialog.dispose();
+            }
+        });
+
+        GridBagConstraints c = new GridBagConstraints();
+        GridBagLayout layout = new GridBagLayout();
+        panelDialog.setLayout(layout);
+
+        c.insets = new Insets(5, 5, 5, 5);
+
+        c.gridx = 0;
+        c.gridy = 0;
+        c.gridwidth = 6;
+        c.gridheight = 1;
+
+        panelDialog.add(lbWarning, c);
+
+        c.gridx = 0;
+        c.gridy = 1;
+        c.gridwidth = 6;
+        c.gridheight = 1;
+
+        panelDialog.add(lbAdvice, c);
+
+        c.gridx = 0;
+        c.gridy = 2;
+        c.gridwidth = 6;
+        c.gridheight = 1;
+
+        panelDialog.add(lbQuestion, c);
+
+        c.anchor = GridBagConstraints.LAST_LINE_START;
+        c.gridx = 0;
+        c.gridy = 3;
+        c.gridwidth = 1;
+        c.gridheight = 1;
+
+        panelDialog.add(btnConfirm, c);
+
+        c.anchor = GridBagConstraints.LAST_LINE_END;
+        c.gridx = 5;
+        c.gridy = 3;
+        c.gridwidth = 1;
+        c.gridheight = 1;
+
+        panelDialog.add(btnCancel, c);
+
+        dialog.add(panelDialog);
+        dialog.setVisible(true);
+    }
+
+    private void clearButton(JTextField tf) {
+        if (!tf.isEnabled()) {
+            tf.setEnabled(true);
+        }
+        tf.setText("");
+    }
+
+    private void resetButton(JTextField tf) {
+        File keyFile = new File(PATHAPIKEY);
+        if (keyFile.exists()) {
+            Gson gson = new Gson();
+            ApiKey key = gson.fromJson(leerJSON(PATHAPIKEY), ApiKey.class);
+            tf.setText(key.getKey());
+            tf.setEnabled(false);
+        } else {
+            clearButton(tf);
+        }
+    }
+
+    private void continueButton(JTextField tf) {
+        ApiKey key = new ApiKey(tf.getText());
+        Gson gson = new Gson();
+        guardarJSON(gson.toJson(key), PATHAPIKEY);
+
+        dialog.dispose();
+        this.remove(panelEnterKey);
+
+        mainFrameStart();
+    }
+
+    private void mainFrameStart() {
+        Gson gson = new Gson();
+        apiKey = gson.fromJson(leerJSON(PATHAPIKEY), ApiKey.class).getKey();
         createFileTree();
         File airports = new File(PATHCACHEAIRPORTREAL);
-        if(!airports.exists()){
+        if (!airports.exists()) {
             Main.createAirportsJSON();
         }
-        File cache = new File(PATHCACHE+"/cache.json");
-        if(!cache.exists()){
-            Main.guardarJSON(Cache.cacheJSON, PATHCACHE+"/cache.json");
+        File cache = new File(PATHCACHE + "/cache.json");
+        if (!cache.exists()) {
+            Main.guardarJSON(Cache.cacheJSON, PATHCACHE + "/cache.json");
         }
-        initComponents();
         start();
     }
 
@@ -391,7 +696,7 @@ public class MainFrame extends javax.swing.JFrame {
         lbPriceLevel = new JLabel();
         lbPriceLevel.setFont(defaultFontHeaderBold);
         homePanel = new JPanel();
-        homePanel.setBackground(Color.LIGHT_GRAY);
+        //homePanel.setBackground(Color.LIGHT_GRAY);
 
         GridBagLayout homeLayout = new GridBagLayout();
         GridBagConstraints constraints = new GridBagConstraints();
@@ -442,17 +747,11 @@ public class MainFrame extends javax.swing.JFrame {
         Dimension dim = new Dimension(this.getSize().width / 7, 25);
         JPanel topPanel = new JPanel();
         topPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        topPanel.setBackground(Color.blue);
+        //topPanel.setBackground(Color.blue);
         topPanel.setLayout(new GridLayout(2, 7));
 
         // Top Row
         JLabel lbFrom = new JLabel("From:");
-
-        defaultFontSize5Bold = new Font(lbFrom.getFont().getName(), Font.BOLD, lbFrom.getFont().getSize() + 5);
-        defaultFontSize5 = new Font(lbFrom.getFont().getName(), lbFrom.getFont().getStyle(), lbFrom.getFont().getSize() + 5);
-        defaultFontSize2 = new Font(lbFrom.getFont().getName(), lbFrom.getFont().getStyle(), lbFrom.getFont().getSize() + 2);
-        defaultFontHeaderBold = new Font(lbFrom.getFont().getName(), Font.BOLD, lbFrom.getFont().getSize() + 10);
-        defaultFontHeader = new Font(lbFrom.getFont().getName(), lbFrom.getFont().getStyle(), lbFrom.getFont().getSize() + 10);
 
         lbFrom.setFont(defaultFontSize5Bold);
         lbFrom.setSize(dim);
@@ -606,13 +905,13 @@ public class MainFrame extends javax.swing.JFrame {
 
         btnSwapFlightsTab.setFont(defaultFontSize5);
 
-        scrollPanelMain.setBackground(Color.MAGENTA);
+        //scrollPanelMain.setBackground(Color.MAGENTA);
         scrollLayout = new CardLayout();
         scrollPanelMain.setLayout(scrollLayout);
 
         bottomPanel = new JPanel();
         bottomPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        bottomPanel.setBackground(Color.red);
+        //bottomPanel.setBackground(Color.red);
 
         if (!keepFilters) {
             scrollPanelGoing = createScrollPanelGoing(scrollElementsGoing);
@@ -649,7 +948,7 @@ public class MainFrame extends javax.swing.JFrame {
 
         if (!keepFilters) {
             filtersPanel = new JPanel();
-            filtersPanel.setBackground(Color.cyan);
+            //filtersPanel.setBackground(Color.cyan);
             filtersPanel.setLayout(new GridLayout(1, 2));
 
             ArrayList<FlightFilters> filters = new ArrayList<>();
@@ -675,7 +974,7 @@ public class MainFrame extends javax.swing.JFrame {
     private JScrollPane createScrollPanelGoing(ArrayList<FlightListElementPanel> scrollElements) {
         scrollPanelListGoing = new ArrayList<>();
         JPanel scrollInsidePanel = new JPanel();
-        scrollInsidePanel.setBackground(Color.white);
+        //scrollInsidePanel.setBackground(Color.white);
         scrollInsidePanel.setLayout(new BoxLayout(scrollInsidePanel, BoxLayout.Y_AXIS));
 
         for (FlightListElementPanel p : scrollElements) {
@@ -685,7 +984,7 @@ public class MainFrame extends javax.swing.JFrame {
         }
 
         scrollPanelGoing = new JScrollPane(scrollInsidePanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        scrollPanelGoing.setBackground(Color.yellow);
+        //scrollPanelGoing.setBackground(Color.yellow);
 
         JScrollBar verticalScroll = scrollPanelGoing.getVerticalScrollBar();
         verticalScroll.setUnitIncrement(20);
@@ -697,7 +996,7 @@ public class MainFrame extends javax.swing.JFrame {
     private JScrollPane createScrollPanelReturn(ArrayList<FlightListElementPanel> scrollElements) {
         scrollPanelListReturn = new ArrayList<>();
         JPanel scrollInsidePanel = new JPanel();
-        scrollInsidePanel.setBackground(Color.white);
+        //scrollInsidePanel.setBackground(Color.white);
         scrollInsidePanel.setLayout(new BoxLayout(scrollInsidePanel, BoxLayout.Y_AXIS));
 
         for (FlightListElementPanel p : scrollElements) {
@@ -707,7 +1006,7 @@ public class MainFrame extends javax.swing.JFrame {
         }
 
         scrollPanelReturn = new JScrollPane(scrollInsidePanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        scrollPanelReturn.setBackground(Color.yellow);
+        //scrollPanelReturn.setBackground(Color.yellow);
 
         JScrollBar verticalScroll = scrollPanelReturn.getVerticalScrollBar();
         verticalScroll.setUnitIncrement(20);
@@ -820,10 +1119,10 @@ public class MainFrame extends javax.swing.JFrame {
     private void addFilters(JPanel filtersPanel, ArrayList<FlightFilters> filters) {
         JPanel leftCol = new JPanel();
         leftCol.setLayout(new GridLayout(0, 1));
-        leftCol.setBackground(Color.PINK);
+        //leftCol.setBackground(Color.PINK);
         JPanel rightCol = new JPanel();
         rightCol.setLayout(new GridLayout(0, 1));
-        rightCol.setBackground(Color.cyan);
+        //rightCol.setBackground(Color.cyan);
 
         ArrayList<JRadioButton> rbs = new ArrayList<>();
         cbs = new ArrayList<>();
@@ -1236,7 +1535,7 @@ public class MainFrame extends javax.swing.JFrame {
             btnSwapFlightsTab.setEnabled(false);
 
             String engine = "google_flights";
-            String apiKey = "cb86689dbb1f68e6363ba7c5ecf4604177d0e21cd801037bd8e35ef77a43e271";
+            //String apiKey = "cb86689dbb1f68e6363ba7c5ecf4604177d0e21cd801037bd8e35ef77a43e271";
 
             String linkGoing = "https://serpapi.com/search.json?engine=" + engine + "&departure_id=" + departureId + "&arrival_id=" + arrivalId + "&gl=us&hl=en&adults=" + passengers;
             String linkReturn = "https://serpapi.com/search.json?engine=" + engine + "&departure_id=" + arrivalId + "&arrival_id=" + departureId + "&gl=us&hl=en&adults=" + passengers;
@@ -1262,6 +1561,10 @@ public class MainFrame extends javax.swing.JFrame {
             conn.setRequestProperty("Accept", "application/json");
 
             if (conn.getResponseCode() != 200) {
+                if (conn.getResponseCode() == 401) {
+                    System.out.println("Introduce a valid API Key");
+                    System.exit(1);
+                }
                 throw new RuntimeException("Failed : HTTP Error code : "
                         + conn.getResponseCode());
             }

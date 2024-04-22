@@ -46,7 +46,7 @@ public class FlightDetailsPanel extends javax.swing.JPanel {
         lbHeader.setText(flightDetails.getFlights().getFirst().getDeparture_airport().getId() + " - " + flightDetails.getFlights().getLast().getArrival_airport().getId());
         lbHeader.setOpaque(true);
         JPanel detailsPanel = new JPanel();
-        detailsPanel.setBackground(Color.red);
+        //detailsPanel.setBackground(Color.red);
         JButton btnBack = new JButton("Back");
         btnBack.setFont(MainFrame.defaultFontHeader);
         btnBack.setToolTipText("Go Back");
@@ -148,7 +148,7 @@ public class FlightDetailsPanel extends javax.swing.JPanel {
 
         for (int i = 0; i < flightDetails.getFlights().size(); i++) {
             JPanel column = new JPanel();
-            column.setBackground(Color.lightGray);
+            //column.setBackground(Color.lightGray);
             column.setLayout(new GridLayout(11, 1));
 
             Flight f = flightDetails.getFlights().get(i);
